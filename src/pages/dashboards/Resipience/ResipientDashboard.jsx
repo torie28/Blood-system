@@ -69,7 +69,7 @@ const ResipientDashboard = () => {
             date: new Date().toISOString().split('T')[0]
         };
         setRequests(prev => [newRequest, ...prev]);
-        
+
         // Reset form
         setFormData({
             hospitalName: '',
@@ -85,27 +85,25 @@ const ResipientDashboard = () => {
             patientGender: '',
             medicalHistory: ''
         });
-        
+
         alert('Blood request submitted successfully!');
     };
 
     return (
         <div className="recipient-dashboard-container">
-            <nav className="recipient-nav">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between h-16">
-                        <div className="flex items-center">
-                            <h1 className="recipient-nav-title">Blood Recipient Dashboard</h1>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <span className="recipient-welcome-text">Welcome, Recipient</span>
-                            <Link to="/signout" className="recipient-signout-link">
-                                Sign Out
-                            </Link>
-                        </div>
+            <header className="classic-dashboard-header">
+                <div className="classic-dashboard-header-content">
+                    <div className="flex items-center">
+                        <h1 className="classic-dashboard-title">Blood Recipient Dashboard</h1>
+                    </div>
+                    <div className="classic-dashboard-user-info">
+                        <span className="recipient-welcome-text">Welcome, Recipient</span>
+                        <Link to="/signout" className="classic-signout-button">
+                            Sign Out
+                        </Link>
                     </div>
                 </div>
-            </nav>
+            </header>
 
             <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
                 <div className="px-4 py-6 sm:px-0">
@@ -115,17 +113,15 @@ const ResipientDashboard = () => {
                             <nav className="-mb-px flex">
                                 <button
                                     onClick={() => setActiveTab('new-request')}
-                                    className={`recipient-tab-button ${
-                                        activeTab === 'new-request' ? 'active' : ''
-                                    }`}
+                                    className={`recipient-tab-button ${activeTab === 'new-request' ? 'active' : ''
+                                        }`}
                                 >
                                     New Blood Request
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('my-requests')}
-                                    className={`recipient-tab-button ${
-                                        activeTab === 'my-requests' ? 'active' : ''
-                                    }`}
+                                    className={`recipient-tab-button ${activeTab === 'my-requests' ? 'active' : ''
+                                        }`}
                                 >
                                     My Requests ({requests.length})
                                 </button>
@@ -138,7 +134,7 @@ const ResipientDashboard = () => {
                             <h2 className="recipient-card-header">
                                 Request Blood from Hospital
                             </h2>
-                            
+
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="recipient-form-grid">
                                     {/* Hospital Selection */}
@@ -360,7 +356,7 @@ const ResipientDashboard = () => {
                             <h2 className="recipient-card-header">
                                 My Blood Requests
                             </h2>
-                            
+
                             {requests.length === 0 ? (
                                 <div className="recipient-empty-state">
                                     <p>No blood requests found.</p>
