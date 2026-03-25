@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const ResipientDashboard = () => {
     const [activeTab, setActiveTab] = useState('new-request');
+    const [hospitals, setHospitals] = useState([]);
+    const [bloodTypes, setBloodTypes] = useState([]);
+    const [urgencyLevels, setUrgencyLevels] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [requests, setRequests] = useState([
         {
             id: 1,
@@ -41,16 +45,39 @@ const ResipientDashboard = () => {
         medicalHistory: ''
     });
 
-    const hospitals = [
-        'City General Hospital',
-        'St. Mary Medical Center',
-        'Regional Medical Center',
-        'University Hospital',
-        'Community Health Center',
-        'Memorial Hospital'
-    ];
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [hospitalsResponse, bloodTypesResponse, urgencyLevelsResponse] = await Promise.all([
+                    fetch('/api/hospitals'),
+                    fetch('/api/blood-groups'),
+                    fetch('/api/urgency-levels')
+                ]);
 
-    const bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+                const hospitalsData = await hospitalsResponse.json();
+                const bloodTypesData = await bloodTypesResponse.json();
+                const urgencyLevelsData = await urgencyLevelsResponse.json();
+
+                if (hospitalsData.success) {
+                    setHospitals(hospitalsData.data);
+                }
+
+                if (bloodTypesData.success) {
+                    setBloodTypes(bloodTypesData.data);
+                }
+
+                if (urgencyLevelsData.success) {
+                    setUrgencyLevels(urgencyLevelsData.data);
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -148,14 +175,18 @@ const ResipientDashboard = () => {
                                             onChange={handleInputChange}
                                             required
                                             className="recipient-form-select"
+                                            disabled={loading}
                                         >
-                                            <option value="">Choose a hospital...</option>
+                                            <option value="">
+                                                {loading ? 'Loading hospitals...' : 'Choose a hospital...'}
+                                            </option>
                                             {hospitals.map(hospital => (
-                                                <option key={hospital} value={hospital}>{hospital}</option>
+                                                <option key={hospital.id} value={hospital.name}>
+                                                    {hospital.name}
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
-
                                     {/* Blood Type */}
                                     <div className="recipient-form-group">
                                         <label className="recipient-form-label required">
@@ -170,7 +201,7 @@ const ResipientDashboard = () => {
                                         >
                                             <option value="">Select blood type...</option>
                                             {bloodTypes.map(type => (
-                                                <option key={type} value={type}>{type}</option>
+                                                <option key={type.id} value={type.group}>{type.group}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -203,10 +234,17 @@ const ResipientDashboard = () => {
                                             onChange={handleInputChange}
                                             required
                                             className="recipient-form-select"
+                                            disabled={loading}
                                         >
-                                            <option value="Low">Low</option>
-                                            <option value="Medium">Medium</option>
-                                            <option value="High">High - Emergency</option>
+                                            <option value="">
+                                                {loading ? 'Loading urgency levels...' : 'Select urgency level...'}
+                                            </option>
+                                            {urgencyLevels.map(level => (
+                                                <option key={level.id} value={level.level.charAt(0).toUpperCase() + level.level.slice(1)}>
+                                                    {level.level.charAt(0).toUpperCase() + level.level.slice(1)}
+                                                    {level.level === 'high' ? ' - Emergency' : ''}
+                                                </option>
+                                            ))}
                                         </select>
                                     </div>
 

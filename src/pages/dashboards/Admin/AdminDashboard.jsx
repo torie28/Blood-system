@@ -8,6 +8,15 @@ const AdminDashboard = () => {
     const [bloodInventory, setBloodInventory] = useState({});
     const [selectedLocation, setSelectedLocation] = useState('');
     const [loading, setLoading] = useState(true);
+    const [showHospitalDialog, setShowHospitalDialog] = useState(false);
+    const [hospitals, setHospitals] = useState([]);
+    const [newHospital, setNewHospital] = useState({
+        name: '',
+        location: '',
+        contactNumber: '',
+        email: '',
+        address: ''
+    });
 
     // Mock data - replace with actual API calls
     useEffect(() => {
@@ -123,6 +132,32 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleAddHospital = () => {
+        if (newHospital.name && newHospital.location && newHospital.contactNumber && newHospital.email) {
+            const hospital = {
+                id: hospitals.length + 1,
+                ...newHospital,
+                registeredDate: new Date().toISOString().split('T')[0]
+            };
+            setHospitals([...hospitals, hospital]);
+            setNewHospital({
+                name: '',
+                location: '',
+                contactNumber: '',
+                email: '',
+                address: ''
+            });
+            setShowHospitalDialog(false);
+        }
+    };
+
+    const handleInputChange = (e) => {
+        setNewHospital({
+            ...newHospital,
+            [e.target.name]: e.target.value
+        });
+    };
+
     if (loading) {
         return (
             <div className="admin-loading-container">
@@ -199,6 +234,13 @@ const AdminDashboard = () => {
                                         }`}
                                 >
                                     Blood Inventory
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('hospitals')}
+                                    className={`admin-tab-button ${activeTab === 'hospitals' ? 'active' : ''
+                                        }`}
+                                >
+                                    Hospital Management
                                 </button>
                             </nav>
                         </div>
@@ -347,6 +389,169 @@ const AdminDashboard = () => {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Hospital Management Tab */}
+                        {activeTab === 'hospitals' && (
+                            <div className="admin-tab-content">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-semibold text-gray-800">Hospital Management</h3>
+                                    <button
+                                        onClick={() => setShowHospitalDialog(true)}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                                    >
+                                        Add Hospital
+                                    </button>
+                                </div>
+
+                                {/* Hospitals Table */}
+                                <div className="admin-table-container">
+                                    <table className="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Hospital Name</th>
+                                                <th>Location</th>
+                                                <th>Contact Number</th>
+                                                <th>Email</th>
+                                                <th>Address</th>
+                                                <th>Registered Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {hospitals.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="7" className="text-center py-8 text-gray-500">
+                                                        No hospitals registered yet. Click "Add Hospital" to register a new hospital.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                hospitals.map(hospital => (
+                                                    <tr key={hospital.id}>
+                                                        <td>{hospital.id}</td>
+                                                        <td className="font-medium">{hospital.name}</td>
+                                                        <td>{hospital.location}</td>
+                                                        <td>{hospital.contactNumber}</td>
+                                                        <td>{hospital.email}</td>
+                                                        <td>{hospital.address || '-'}</td>
+                                                        <td>{hospital.registeredDate}</td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Add Hospital Dialog */}
+                        {showHospitalDialog && (
+                            <div className="classic-hospital-dialog-overlay">
+                                <div className="classic-hospital-dialog">
+                                    <div className="classic-hospital-dialog-header">
+                                        <h3 className="classic-hospital-dialog-title">Add New Hospital</h3>
+                                        <button
+                                            onClick={() => setShowHospitalDialog(false)}
+                                            className="classic-hospital-dialog-close"
+                                        >
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <div className="classic-hospital-dialog-body">
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label required">
+                                                Hospital Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="name"
+                                                value={newHospital.name}
+                                                onChange={handleInputChange}
+                                                className="classic-form-input"
+                                                placeholder="Enter hospital name"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label required">
+                                                Location
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="location"
+                                                value={newHospital.location}
+                                                onChange={handleInputChange}
+                                                className="classic-form-input"
+                                                placeholder="Enter location"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label required">
+                                                Contact Number
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                name="contactNumber"
+                                                value={newHospital.contactNumber}
+                                                onChange={handleInputChange}
+                                                className="classic-form-input"
+                                                placeholder="Enter contact number"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label required">
+                                                Email
+                                            </label>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                value={newHospital.email}
+                                                onChange={handleInputChange}
+                                                className="classic-form-input"
+                                                placeholder="Enter email address"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label">
+                                                Address
+                                            </label>
+                                            <textarea
+                                                name="address"
+                                                value={newHospital.address}
+                                                onChange={handleInputChange}
+                                                className="classic-form-textarea"
+                                                placeholder="Enter hospital address"
+                                                rows="3"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="classic-hospital-dialog-footer">
+                                        <button
+                                            onClick={() => setShowHospitalDialog(false)}
+                                            className="classic-button classic-button-secondary"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleAddHospital}
+                                            className="classic-button classic-button-primary"
+                                        >
+                                            Add Hospital
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         )}
