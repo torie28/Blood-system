@@ -60,7 +60,7 @@ const AdminDashboard = () => {
 
     const fetchBloodTypes = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/blood-types`);
+            const response = await fetch(`${API_BASE_URL}/blood-groups`);
 
             // Check if response is ok and is JSON
             if (!response.ok) {
@@ -82,15 +82,15 @@ const AdminDashboard = () => {
             console.warn('API endpoint not available, using fallback blood types:', error.message);
             // Fallback to default blood types
             setBloodTypes([
-                { id: 1, blood_type: 'O+' },
-                { id: 2, blood_type: 'O-' },
-                { id: 3, blood_type: 'A+' },
-                { id: 4, blood_type: 'A-' },
-                { id: 5, blood_type: 'B+' },
-                { id: 6, blood_type: 'B-' },
-                { id: 7, blood_type: 'AB+' },
-                { id: 8, blood_type: 'AB-' },
-                { id: 9, blood_type: 'All' }
+                { id: 1, group: 'O+' },
+                { id: 2, group: 'O-' },
+                { id: 3, group: 'A+' },
+                { id: 4, group: 'A-' },
+                { id: 5, group: 'B+' },
+                { id: 6, group: 'B-' },
+                { id: 7, group: 'AB+' },
+                { id: 8, group: 'AB-' },
+                { id: 9, group: 'All' }
             ]);
         }
     };
@@ -1145,7 +1145,7 @@ const AdminDashboard = () => {
                                                 >
                                                     <option value="">Select blood type</option>
                                                     {bloodTypes.map(type => {
-                                                        const value = typeof type === 'object' ? type.level || type.blood_type || type.name : type;
+                                                        const value = typeof type === 'object' ? type.group || type.blood_type || type.name : type;
                                                         const key = type.id || value;
                                                         return (
                                                             <option key={key} value={value}>
@@ -1217,15 +1217,20 @@ const AdminDashboard = () => {
                                             <label className="classic-form-label required">
                                                 Hospital Name
                                             </label>
-                                            <input
-                                                type="text"
+                                            <select
                                                 name="hospitalName"
                                                 value={newDonorRequest.hospitalName}
                                                 onChange={handleDonorRequestInputChange}
                                                 className="classic-form-input"
-                                                placeholder="Enter hospital name"
                                                 required
-                                            />
+                                            >
+                                                <option value="">Select hospital</option>
+                                                {hospitals.map(hospital => (
+                                                    <option key={hospital.id} value={hospital.name}>
+                                                        {hospital.name}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
