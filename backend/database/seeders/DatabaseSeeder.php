@@ -17,9 +17,21 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Check if user already exists
+        if (!User::where('email', 'test@example.com')->exists()) {
+            User::factory()->create([
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+                'role' => 'admin',
+                'location' => 'Nairobi',
+                'phone_number' => '+254-123456789',
+            ]);
+        }
+
+        $this->call([
+            LocationSeeder::class,
+            BloodGroupSeeder::class,
+            HospitalSeeder::class,
         ]);
     }
 }
