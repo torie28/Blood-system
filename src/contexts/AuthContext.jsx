@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
@@ -14,27 +14,51 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Initialize auth state on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    const storedToken = localStorage.getItem('authToken');
+    if (storedUser) {
+      const userData = JSON.parse(storedUser);
+      // Include token if it exists
+      if (storedToken) {
+        userData.token = storedToken;
+      }
+      setUser(userData);
+      setIsAuthenticated(true);
+    }
+  }, []);
+
   const login = (userData) => {
     setUser(userData);
     setIsAuthenticated(true);
     localStorage.setItem('user', JSON.stringify(userData));
+    if (userData.token) {
+      localStorage.setItem('authToken', userData.token);
+    }
   };
 
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
     localStorage.removeItem('user');
+    localStorage.removeItem('authToken');
   };
 
   const checkAuth = () => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      const userData = JSON.parse(storedUser);
-      setUser(userData);
-      setIsAuthenticated(true);
-      return userData;
-    }
-    return null;
+    return user; // Return current user state
+  };
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('authToken');
+    return token ? {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    } : {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
   };
 
   const value = {
@@ -42,7 +66,8 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     login,
     logout,
-    checkAuth
+    checkAuth,
+    getAuthHeaders
   };
 
   return (

@@ -50,23 +50,55 @@ const Signin = () => {
             setErrors({});
 
             try {
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Make actual API call to backend
+                const response = await fetch('http://localhost:8000/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: formData.email,
+                        password: formData.password
+                    })
+                });
 
-                // Extract user name from email (for demo purposes)
-                const userName = formData.email.split('@')[0];
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Login failed');
+                }
+
+                // Extract user data from API response
                 const userData = {
-                    name: userName.charAt(0).toUpperCase() + userName.slice(1),
-                    email: formData.email,
-                    role: 'donor'
+                    id: data.user.id,
+                    name: data.user.name,
+                    email: data.user.email,
+                    role: data.user.role,
+                    token: data.token,
+                    profilePicture: data.user.profilePicture
                 };
 
                 // Handle successful login
                 login(userData);
-                console.log('Login successful:', formData);
-                navigate('/dashboard/donor');
+                console.log('Login successful:', userData);
+
+                // Redirect based on user role
+                switch (userData.role) {
+                    case 'admin':
+                        navigate('/dashboard/admin');
+                        break;
+                    case 'recipient':
+                        navigate('/dashboard/recipient');
+                        break;
+                    case 'donor':
+                    default:
+                        navigate('/dashboard/donor');
+                        break;
+                }
             } catch (error) {
-                setErrors({ general: 'Invalid email or password' });
+                console.error('Login error:', error);
+                setErrors({ general: error.message || 'Invalid email or password' });
             } finally {
                 setIsLoading(false);
             }

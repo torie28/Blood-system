@@ -2,11 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\auth\RegistrationController;
+use App\Http\Controllers\auth\LoginController;
 use App\Http\Controllers\HospitalController;
 use App\Http\Controllers\BloodGroupController;
 use App\Http\Controllers\UrgencyLevelController;
 
 Route::post('/register', [RegistrationController::class, 'register']);
+Route::post('/login', [LoginController::class, 'login']);
 
 Route::get('/hospitals', [HospitalController::class, 'index']);
 Route::post('/hospitals', [HospitalController::class, 'store']);

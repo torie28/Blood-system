@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\auth;
 
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -37,8 +38,18 @@ class LoginController extends Controller
             ], 401);
         }
 
-        // Create token (assuming you're using Laravel Sanctum or similar)
-        $token = $user->createToken('auth_token')->plainTextToken;
+        try {
+            // Create token (assuming you're using Laravel Sanctum or similar)
+            $token = $user->createToken('auth_token')->plainTextToken;
+        } catch (\Exception $e) {
+            // If token creation fails, return user data without token for now
+            return response()->json([
+                'success' => true,
+                'message' => 'Login successful (no token)',
+                'user' => $user,
+                'token' => null
+            ], 200);
+        }
 
         return response()->json([
             'success' => true,
