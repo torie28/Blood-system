@@ -21,10 +21,28 @@ const AdminDashboard = () => {
         email: '',
         address: ''
     });
+    const [donorRequests, setDonorRequests] = useState([]);
+    const [showDonorRequestDialog, setShowDonorRequestDialog] = useState(false);
+    const [bloodTypes, setBloodTypes] = useState([]);
+    const [urgencyLevels, setUrgencyLevels] = useState([]);
+    const [newDonorRequest, setNewDonorRequest] = useState({
+        title: '',
+        description: '',
+        bloodType: '',
+        units: '',
+        urgency: 'Medium',
+        location: '',
+        hospitalName: '',
+        contactPerson: '',
+        contactNumber: '',
+        deadline: ''
+    });
 
     // Fetch data from API
     useEffect(() => {
         fetchHospitals();
+        fetchBloodTypes();
+        fetchUrgencyLevels();
         fetchMockData();
     }, []);
 
@@ -37,6 +55,75 @@ const AdminDashboard = () => {
             }
         } catch (error) {
             console.error('Error fetching hospitals:', error);
+        }
+    };
+
+    const fetchBloodTypes = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/blood-types`);
+
+            // Check if response is ok and is JSON
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Response is not JSON');
+            }
+
+            const data = await response.json();
+            if (data.success && data.data) {
+                setBloodTypes(data.data);
+            } else {
+                throw new Error('Invalid response format');
+            }
+        } catch (error) {
+            console.warn('API endpoint not available, using fallback blood types:', error.message);
+            // Fallback to default blood types
+            setBloodTypes([
+                { id: 1, blood_type: 'O+' },
+                { id: 2, blood_type: 'O-' },
+                { id: 3, blood_type: 'A+' },
+                { id: 4, blood_type: 'A-' },
+                { id: 5, blood_type: 'B+' },
+                { id: 6, blood_type: 'B-' },
+                { id: 7, blood_type: 'AB+' },
+                { id: 8, blood_type: 'AB-' },
+                { id: 9, blood_type: 'All' }
+            ]);
+        }
+    };
+
+    const fetchUrgencyLevels = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/urgency-levels`);
+
+            // Check if response is ok and is JSON
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Response is not JSON');
+            }
+
+            const data = await response.json();
+            if (data.success && data.data) {
+                setUrgencyLevels(data.data);
+            } else {
+                throw new Error('Invalid response format');
+            }
+        } catch (error) {
+            console.warn('API endpoint not available, using fallback urgency levels:', error.message);
+            // Fallback to default urgency levels
+            setUrgencyLevels([
+                { id: 1, level: 'Low' },
+                { id: 2, level: 'Medium' },
+                { id: 3, level: 'High' },
+                { id: 4, level: 'Critical' }
+            ]);
         }
     };
 
@@ -112,6 +199,39 @@ const AdminDashboard = () => {
                 'B-': 8,
                 'AB-': 5
             });
+
+            setDonorRequests([
+                {
+                    id: 1,
+                    title: 'Urgent Blood Donation Drive - O+ Needed',
+                    description: 'We urgently need O+ blood type donors for emergency surgeries at City General Hospital. Your donation can save lives.',
+                    bloodType: 'O+',
+                    units: 10,
+                    urgency: 'High',
+                    location: 'Nairobi',
+                    hospitalName: 'City General Hospital',
+                    contactPerson: 'Dr. Sarah Johnson',
+                    contactNumber: '+254-712-345-678',
+                    deadline: '2024-03-30',
+                    postedDate: '2024-03-24',
+                    status: 'active'
+                },
+                {
+                    id: 2,
+                    title: 'Blood Donation Camp - All Types Welcome',
+                    description: 'Join our weekend blood donation camp. All blood types needed to replenish our blood bank supplies.',
+                    bloodType: 'All',
+                    units: 50,
+                    urgency: 'Medium',
+                    location: 'Mombasa',
+                    hospitalName: 'St. Mary Medical Center',
+                    contactPerson: 'Nurse Michael Kamau',
+                    contactNumber: '+254-723-456-789',
+                    deadline: '2024-04-05',
+                    postedDate: '2024-03-23',
+                    status: 'active'
+                }
+            ]);
 
             setLoading(false);
         }, 1000);
@@ -283,6 +403,64 @@ const AdminDashboard = () => {
         }
     };
 
+    const handleDonorRequestInputChange = (e) => {
+        setNewDonorRequest({
+            ...newDonorRequest,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const handleAddDonorRequest = () => {
+        if (newDonorRequest.title && newDonorRequest.description && newDonorRequest.bloodType &&
+            newDonorRequest.units && newDonorRequest.location && newDonorRequest.hospitalName &&
+            newDonorRequest.contactPerson && newDonorRequest.contactNumber && newDonorRequest.deadline) {
+
+            const newRequest = {
+                ...newDonorRequest,
+                id: donorRequests.length + 1,
+                postedDate: new Date().toISOString().split('T')[0],
+                status: 'active'
+            };
+
+            setDonorRequests([newRequest, ...donorRequests]);
+
+            // Reset form
+            setNewDonorRequest({
+                title: '',
+                description: '',
+                bloodType: '',
+                units: '',
+                urgency: 'Medium',
+                location: '',
+                hospitalName: '',
+                contactPerson: '',
+                contactNumber: '',
+                deadline: ''
+            });
+            setShowDonorRequestDialog(false);
+            alert('Donor request posted successfully!');
+        } else {
+            alert('Please fill in all required fields.');
+        }
+    };
+
+    const handleDeleteDonorRequest = (requestId) => {
+        if (window.confirm('Are you sure you want to delete this donor request?')) {
+            setDonorRequests(prev => prev.filter(req => req.id !== requestId));
+            alert('Donor request deleted successfully!');
+        }
+    };
+
+    const handleToggleDonorRequestStatus = (requestId) => {
+        setDonorRequests(prev =>
+            prev.map(req =>
+                req.id === requestId
+                    ? { ...req, status: req.status === 'active' ? 'inactive' : 'active' }
+                    : req
+            )
+        );
+    };
+
     if (loading) {
         return (
             <div className="admin-loading-container">
@@ -366,6 +544,13 @@ const AdminDashboard = () => {
                                         }`}
                                 >
                                     Hospital Management
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('donor-requests')}
+                                    className={`admin-tab-button ${activeTab === 'donor-requests' ? 'active' : ''
+                                        }`}
+                                >
+                                    Donor Requests
                                 </button>
                             </nav>
                         </div>
@@ -808,6 +993,301 @@ const AdminDashboard = () => {
                                             className="classic-button classic-button-primary"
                                         >
                                             Update Hospital
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Donor Requests Tab */}
+                        {activeTab === 'donor-requests' && (
+                            <div className="admin-tab-content">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-semibold text-gray-800">Donor Requests Management</h3>
+                                    <button
+                                        onClick={() => setShowDonorRequestDialog(true)}
+                                        className="classic-add-hospital-button"
+                                    >
+                                        Post New Request
+                                    </button>
+                                </div>
+
+                                {/* Donor Requests Table */}
+                                <div className="admin-table-container">
+                                    <table className="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Title</th>
+                                                <th>Hospital</th>
+                                                <th>Location</th>
+                                                <th>Blood Type</th>
+                                                <th>Units</th>
+                                                <th>Urgency</th>
+                                                <th>Deadline</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {donorRequests.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="9" className="text-center py-8 text-gray-500">
+                                                        No donor requests posted yet. Click "Post New Request" to create your first request.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                donorRequests.map(request => (
+                                                    <tr key={request.id}>
+                                                        <td className="font-medium">
+                                                            <div>
+                                                                <div className="font-semibold">{request.title}</div>
+                                                                <div className="text-sm text-gray-500 max-w-xs truncate">{request.description}</div>
+                                                            </div>
+                                                        </td>
+                                                        <td>{request.hospitalName}</td>
+                                                        <td>{request.location}</td>
+                                                        <td className="font-medium">{request.bloodType}</td>
+                                                        <td>{request.units}</td>
+                                                        <td>
+                                                            <span className={`admin-urgency-badge admin-urgency-${request.urgency.toLowerCase()}`}>
+                                                                {request.urgency}
+                                                            </span>
+                                                        </td>
+                                                        <td>{request.deadline}</td>
+                                                        <td>
+                                                            <span className={`admin-status-badge admin-status-${request.status}`}>
+                                                                {request.status}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <div className="admin-action-buttons">
+                                                                <button
+                                                                    onClick={() => handleToggleDonorRequestStatus(request.id)}
+                                                                    className={`admin-action-button ${request.status === 'active' ? 'deactivate' : 'activate'}`}
+                                                                >
+                                                                    {request.status === 'active' ? 'Deactivate' : 'Activate'}
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteDonorRequest(request.id)}
+                                                                    className="admin-action-button delete"
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Add Donor Request Dialog */}
+                        {showDonorRequestDialog && (
+                            <div className="classic-hospital-dialog-overlay">
+                                <div className="classic-hospital-dialog">
+                                    <div className="classic-hospital-dialog-header">
+                                        <h3 className="classic-hospital-dialog-title">Post New Donor Request</h3>
+                                        <button
+                                            onClick={() => setShowDonorRequestDialog(false)}
+                                            className="classic-hospital-dialog-close"
+                                        >
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <div className="classic-hospital-dialog-body">
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label required">
+                                                Request Title
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="title"
+                                                value={newDonorRequest.title}
+                                                onChange={handleDonorRequestInputChange}
+                                                className="classic-form-input"
+                                                placeholder="Enter request title"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label required">
+                                                Description
+                                            </label>
+                                            <textarea
+                                                name="description"
+                                                value={newDonorRequest.description}
+                                                onChange={handleDonorRequestInputChange}
+                                                className="classic-form-textarea"
+                                                placeholder="Provide detailed description of the blood donation need"
+                                                rows="3"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="classic-form-group">
+                                                <label className="classic-form-label required">
+                                                    Blood Type
+                                                </label>
+                                                <select
+                                                    name="bloodType"
+                                                    value={newDonorRequest.bloodType}
+                                                    onChange={handleDonorRequestInputChange}
+                                                    className="classic-form-input"
+                                                    required
+                                                >
+                                                    <option value="">Select blood type</option>
+                                                    {bloodTypes.map(type => {
+                                                        const value = typeof type === 'object' ? type.level || type.blood_type || type.name : type;
+                                                        const key = type.id || value;
+                                                        return (
+                                                            <option key={key} value={value}>
+                                                                {value}
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+                                            </div>
+
+                                            <div className="classic-form-group">
+                                                <label className="classic-form-label required">
+                                                    Units Needed
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    name="units"
+                                                    value={newDonorRequest.units}
+                                                    onChange={handleDonorRequestInputChange}
+                                                    className="classic-form-input"
+                                                    placeholder="Number of units"
+                                                    min="1"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="classic-form-group">
+                                                <label className="classic-form-label required">
+                                                    Urgency Level
+                                                </label>
+                                                <select
+                                                    name="urgency"
+                                                    value={newDonorRequest.urgency}
+                                                    onChange={handleDonorRequestInputChange}
+                                                    className="classic-form-input"
+                                                    required
+                                                >
+                                                    {urgencyLevels.map(level => {
+                                                        const value = typeof level === 'object' ? level.level || level.name || level.urgency : level;
+                                                        const key = level.id || value;
+                                                        return (
+                                                            <option key={key} value={value}>
+                                                                {value}
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+                                            </div>
+
+                                            <div className="classic-form-group">
+                                                <label className="classic-form-label required">
+                                                    Location
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="location"
+                                                    value={newDonorRequest.location}
+                                                    onChange={handleDonorRequestInputChange}
+                                                    className="classic-form-input"
+                                                    placeholder="Enter location"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label required">
+                                                Hospital Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="hospitalName"
+                                                value={newDonorRequest.hospitalName}
+                                                onChange={handleDonorRequestInputChange}
+                                                className="classic-form-input"
+                                                placeholder="Enter hospital name"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="classic-form-group">
+                                                <label className="classic-form-label required">
+                                                    Contact Person
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="contactPerson"
+                                                    value={newDonorRequest.contactPerson}
+                                                    onChange={handleDonorRequestInputChange}
+                                                    className="classic-form-input"
+                                                    placeholder="Contact person name"
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div className="classic-form-group">
+                                                <label className="classic-form-label required">
+                                                    Contact Number
+                                                </label>
+                                                <input
+                                                    type="tel"
+                                                    name="contactNumber"
+                                                    value={newDonorRequest.contactNumber}
+                                                    onChange={handleDonorRequestInputChange}
+                                                    className="classic-form-input"
+                                                    placeholder="Contact phone number"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label required">
+                                                Deadline
+                                            </label>
+                                            <input
+                                                type="date"
+                                                name="deadline"
+                                                value={newDonorRequest.deadline}
+                                                onChange={handleDonorRequestInputChange}
+                                                className="classic-form-input"
+                                                min={new Date().toISOString().split('T')[0]}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="classic-hospital-dialog-footer">
+                                        <button
+                                            onClick={() => setShowDonorRequestDialog(false)}
+                                            className="classic-button classic-button-secondary"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleAddDonorRequest}
+                                            className="classic-button classic-button-primary"
+                                        >
+                                            Post Request
                                         </button>
                                     </div>
                                 </div>
