@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+const API_BASE_URL = 'http://localhost:8000/api';
+
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('requests');
     const [hospitalRequests, setHospitalRequests] = useState([]);
@@ -18,9 +20,26 @@ const AdminDashboard = () => {
         address: ''
     });
 
-    // Mock data - replace with actual API calls
+    // Fetch data from API
     useEffect(() => {
-        // Simulate API calls
+        fetchHospitals();
+        fetchMockData();
+    }, []);
+
+    const fetchHospitals = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/hospitals`);
+            const data = await response.json();
+            if (data.success) {
+                setHospitals(data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching hospitals:', error);
+        }
+    };
+
+    const fetchMockData = () => {
+        // This is still mock data for other parts of the dashboard
         setTimeout(() => {
             setHospitalRequests([
                 {
@@ -94,7 +113,7 @@ const AdminDashboard = () => {
 
             setLoading(false);
         }, 1000);
-    }, []);
+    };
 
     const filteredRequests = selectedLocation
         ? hospitalRequests.filter(req => req.location === selectedLocation)
@@ -132,22 +151,49 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleAddHospital = () => {
+    const handleAddHospital = async () => {
         if (newHospital.name && newHospital.location && newHospital.contactNumber && newHospital.email) {
-            const hospital = {
-                id: hospitals.length + 1,
-                ...newHospital,
-                registeredDate: new Date().toISOString().split('T')[0]
-            };
-            setHospitals([...hospitals, hospital]);
-            setNewHospital({
-                name: '',
-                location: '',
-                contactNumber: '',
-                email: '',
-                address: ''
-            });
-            setShowHospitalDialog(false);
+            try {
+                const response = await fetch(`${API_BASE_URL}/hospitals`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: newHospital.name,
+                        email: newHospital.email,
+                        phone: newHospital.contactNumber,
+                        address: newHospital.address,
+                        location: newHospital.location
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Refresh hospitals list
+                    await fetchHospitals();
+                    
+                    // Reset form
+                    setNewHospital({
+                        name: '',
+                        location: '',
+                        contactNumber: '',
+                        email: '',
+                        address: ''
+                    });
+                    setShowHospitalDialog(false);
+                    
+                    alert('Hospital added successfully!');
+                } else {
+                    alert('Failed to add hospital: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error adding hospital:', error);
+                alert('Error adding hospital. Please try again.');
+            }
+        } else {
+            alert('Please fill in all required fields.');
         }
     };
 
@@ -432,11 +478,11 @@ const AdminDashboard = () => {
                                                     <tr key={hospital.id}>
                                                         <td>{hospital.id}</td>
                                                         <td className="font-medium">{hospital.name}</td>
-                                                        <td>{hospital.location}</td>
-                                                        <td>{hospital.contactNumber}</td>
+                                                        <td>{hospital.location?.city || hospital.location || '-'}</td>
+                                                        <td>{hospital.phone}</td>
                                                         <td>{hospital.email}</td>
                                                         <td>{hospital.address || '-'}</td>
-                                                        <td>{hospital.registeredDate}</td>
+                                                        <td>{hospital.created_at ? new Date(hospital.created_at).toISOString().split('T')[0] : '-'}</td>
                                                     </tr>
                                                 ))
                                             )}
