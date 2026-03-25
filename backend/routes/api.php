@@ -10,5 +10,7 @@ Route::post('/register', [RegistrationController::class, 'register']);
 
 Route::get('/hospitals', [HospitalController::class, 'index']);
 Route::post('/hospitals', [HospitalController::class, 'store']);
+Route::put('/hospitals/{id}', [HospitalController::class, 'update']);
+Route::delete('/hospitals/{id}', [HospitalController::class, 'destroy']);
 Route::get('/blood-groups', [BloodGroupController::class, 'index']);
 Route::get('/urgency-levels', [UrgencyLevelController::class, 'index']);

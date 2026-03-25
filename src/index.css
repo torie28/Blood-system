@@ -1480,6 +1480,26 @@
   transform: translateY(-1px);
 }
 
+.admin-action-button.edit {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.admin-action-button.edit:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.admin-action-button.delete {
+  background-color: #dc2626;
+  color: white;
+}
+
+.admin-action-button.delete:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+}
+
 .admin-stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

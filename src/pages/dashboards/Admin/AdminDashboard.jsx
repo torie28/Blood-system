@@ -12,6 +12,8 @@ const AdminDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [showHospitalDialog, setShowHospitalDialog] = useState(false);
     const [hospitals, setHospitals] = useState([]);
+    const [showEditDialog, setShowEditDialog] = useState(false);
+    const [editingHospital, setEditingHospital] = useState(null);
     const [newHospital, setNewHospital] = useState({
         name: '',
         location: '',
@@ -202,6 +204,83 @@ const AdminDashboard = () => {
             ...newHospital,
             [e.target.name]: e.target.value
         });
+    };
+
+    const handleEditInputChange = (e) => {
+        setEditingHospital({
+            ...editingHospital,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const handleEditHospital = (hospital) => {
+        setEditingHospital({
+            id: hospital.id,
+            name: hospital.name,
+            location: hospital.location?.city || hospital.location || '',
+            contactNumber: hospital.phone,
+            email: hospital.email,
+            address: hospital.address || ''
+        });
+        setShowEditDialog(true);
+    };
+
+    const handleUpdateHospital = async () => {
+        if (editingHospital.name && editingHospital.location && editingHospital.contactNumber && editingHospital.email) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/hospitals/${editingHospital.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: editingHospital.name,
+                        email: editingHospital.email,
+                        phone: editingHospital.contactNumber,
+                        address: editingHospital.address,
+                        location: editingHospital.location
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    await fetchHospitals();
+                    setShowEditDialog(false);
+                    setEditingHospital(null);
+                    alert('Hospital updated successfully!');
+                } else {
+                    alert('Failed to update hospital: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error updating hospital:', error);
+                alert('Error updating hospital. Please try again.');
+            }
+        } else {
+            alert('Please fill in all required fields.');
+        }
+    };
+
+    const handleDeleteHospital = async (hospitalId) => {
+        if (window.confirm('Are you sure you want to delete this hospital? This action cannot be undone.')) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/hospitals/${hospitalId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    await fetchHospitals();
+                    alert('Hospital deleted successfully!');
+                } else {
+                    alert('Failed to delete hospital: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error deleting hospital:', error);
+                alert('Error deleting hospital. Please try again.');
+            }
+        }
     };
 
     if (loading) {
@@ -464,6 +543,7 @@ const AdminDashboard = () => {
                                                 <th>Email</th>
                                                 <th>Address</th>
                                                 <th>Registered Date</th>
+                                                <th>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -483,6 +563,22 @@ const AdminDashboard = () => {
                                                         <td>{hospital.email}</td>
                                                         <td>{hospital.address || '-'}</td>
                                                         <td>{hospital.created_at ? new Date(hospital.created_at).toISOString().split('T')[0] : '-'}</td>
+                                                        <td>
+                                                            <div className="admin-action-buttons">
+                                                                <button
+                                                                    onClick={() => handleEditHospital(hospital)}
+                                                                    className="admin-action-button edit"
+                                                                >
+                                                                    Edit
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteHospital(hospital.id)}
+                                                                    className="admin-action-button delete"
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </div>
+                                                        </td>
                                                     </tr>
                                                 ))
                                             )}
@@ -596,6 +692,122 @@ const AdminDashboard = () => {
                                             className="classic-button classic-button-primary"
                                         >
                                             Add Hospital
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Edit Hospital Dialog */}
+                        {showEditDialog && editingHospital && (
+                            <div className="classic-hospital-dialog-overlay">
+                                <div className="classic-hospital-dialog">
+                                    <div className="classic-hospital-dialog-header">
+                                        <h3 className="classic-hospital-dialog-title">Edit Hospital</h3>
+                                        <button
+                                            onClick={() => {
+                                                setShowEditDialog(false);
+                                                setEditingHospital(null);
+                                            }}
+                                            className="classic-hospital-dialog-close"
+                                        >
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <div className="classic-hospital-dialog-body">
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label required">
+                                                Hospital Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="name"
+                                                value={editingHospital.name}
+                                                onChange={handleEditInputChange}
+                                                className="classic-form-input"
+                                                placeholder="Enter hospital name"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label required">
+                                                Location
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="location"
+                                                value={editingHospital.location}
+                                                onChange={handleEditInputChange}
+                                                className="classic-form-input"
+                                                placeholder="Enter location"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label required">
+                                                Contact Number
+                                            </label>
+                                            <input
+                                                type="tel"
+                                                name="contactNumber"
+                                                value={editingHospital.contactNumber}
+                                                onChange={handleEditInputChange}
+                                                className="classic-form-input"
+                                                placeholder="Enter contact number"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label required">
+                                                Email
+                                            </label>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                value={editingHospital.email}
+                                                onChange={handleEditInputChange}
+                                                className="classic-form-input"
+                                                placeholder="Enter email address"
+                                                required
+                                            />
+                                        </div>
+
+                                        <div className="classic-form-group">
+                                            <label className="classic-form-label">
+                                                Address
+                                            </label>
+                                            <textarea
+                                                name="address"
+                                                value={editingHospital.address}
+                                                onChange={handleEditInputChange}
+                                                className="classic-form-textarea"
+                                                placeholder="Enter hospital address"
+                                                rows="3"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="classic-hospital-dialog-footer">
+                                        <button
+                                            onClick={() => {
+                                                setShowEditDialog(false);
+                                                setEditingHospital(null);
+                                            }}
+                                            className="classic-button classic-button-secondary"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={handleUpdateHospital}
+                                            className="classic-button classic-button-primary"
+                                        >
+                                            Update Hospital
                                         </button>
                                     </div>
                                 </div>
