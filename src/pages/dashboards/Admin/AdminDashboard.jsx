@@ -169,11 +169,11 @@ const AdminDashboard = () => {
                 });
 
                 const data = await response.json();
-                
+
                 if (data.success) {
                     // Refresh hospitals list
                     await fetchHospitals();
-                    
+
                     // Reset form
                     setNewHospital({
                         name: '',
@@ -183,7 +183,7 @@ const AdminDashboard = () => {
                         address: ''
                     });
                     setShowHospitalDialog(false);
-                    
+
                     alert('Hospital added successfully!');
                 } else {
                     alert('Failed to add hospital: ' + (data.message || 'Unknown error'));
@@ -446,7 +446,7 @@ const AdminDashboard = () => {
                                     <h3 className="text-xl font-semibold text-gray-800">Hospital Management</h3>
                                     <button
                                         onClick={() => setShowHospitalDialog(true)}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                                        className="classic-add-hospital-button"
                                     >
                                         Add Hospital
                                     </button>
