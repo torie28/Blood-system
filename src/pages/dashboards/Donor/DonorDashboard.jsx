@@ -11,7 +11,7 @@ const DonorDashboard = () => {
         if (!userData) {
             navigate('/signin');
         }
-    }, [navigate, checkAuth]);
+    }, [navigate, checkAuth, user]);
 
     const handleLogout = () => {
         logout();
@@ -57,7 +57,7 @@ const DonorDashboard = () => {
                         <div className="classic-stat-label">Total Donations</div>
                     </div>
                     <div className="classic-stat-card">
-                        <div className="classic-stat-number">O+</div>
+                        <div className="classic-stat-number">{user?.blood_group}{user?.blood_type || 'N/A'}</div>
                         <div className="classic-stat-label">Blood Type</div>
                     </div>
                     <div className="classic-stat-card">
@@ -162,6 +162,10 @@ const DonorDashboard = () => {
                                     <h3 className="classic-profile-name">{user?.name || 'John Doe'}</h3>
                                     <p className="classic-profile-id">ID: DON-2024-001</p>
                                 </div>
+                            </div>
+                            <div className="classic-profile-info">
+                                <span className="classic-profile-label">Blood Type</span>
+                                <span className="classic-profile-value">{user?.blood_group}{user?.blood_type || 'N/A'}</span>
                             </div>
                             <div className="classic-profile-info">
                                 <span className="classic-profile-label">Date of Birth</span>

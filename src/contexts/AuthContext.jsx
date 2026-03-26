@@ -46,7 +46,21 @@ export const AuthProvider = ({ children }) => {
   };
 
   const checkAuth = () => {
-    return user; // Return current user state
+    // Check localStorage for persistent authentication
+    const storedUser = localStorage.getItem('user');
+    const storedToken = localStorage.getItem('authToken');
+
+    if (storedUser && storedToken) {
+      try {
+        const userData = JSON.parse(storedUser);
+        userData.token = storedToken;
+        return userData;
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        return null;
+      }
+    }
+    return user; // Return current user state as fallback
   };
 
   const getAuthHeaders = () => {

@@ -7,14 +7,15 @@ const RouteGuard = ({ children, allowedRoles }) => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (!isAuthenticated) {
+        const userData = checkAuth();
+        if (!userData) {
             navigate('/signin');
             return;
         }
 
-        if (allowedRoles && !allowedRoles.includes(user?.role)) {
+        if (allowedRoles && !allowedRoles.includes(userData?.role)) {
             // Redirect to appropriate dashboard based on role
-            switch (user?.role) {
+            switch (userData?.role) {
                 case 'admin':
                     navigate('/dashboard/admin');
                     break;
@@ -27,13 +28,14 @@ const RouteGuard = ({ children, allowedRoles }) => {
                     break;
             }
         }
-    }, [user, isAuthenticated, allowedRoles, navigate]);
+    }, [user, isAuthenticated, allowedRoles, navigate, checkAuth]);
 
-    if (!isAuthenticated) {
+    const userData = checkAuth();
+    if (!userData) {
         return null; // Will redirect in useEffect
     }
 
-    if (allowedRoles && !allowedRoles.includes(user?.role)) {
+    if (allowedRoles && !allowedRoles.includes(userData?.role)) {
         return null; // Will redirect in useEffect
     }
 

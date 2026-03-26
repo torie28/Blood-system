@@ -9,6 +9,8 @@ const Signup = () => {
         confirmPassword: '',
         location: '',
         phone_number: '',
+        blood_group: '',
+        blood_type: '',
     });
     const [errors, setErrors] = useState({});
     const [isLoading, setIsLoading] = useState(false);
@@ -60,6 +62,14 @@ const Signup = () => {
             newErrors.phone_number = 'Phone number is required';
         }
 
+        if (!formData.blood_group) {
+            newErrors.blood_group = 'Blood group is required';
+        }
+
+        if (!formData.blood_type) {
+            newErrors.blood_type = 'Blood type is required';
+        }
+
         return newErrors;
     };
 
@@ -83,7 +93,9 @@ const Signup = () => {
                         password: formData.password,
                         password_confirmation: formData.confirmPassword,
                         location: formData.location,
-                        phone_number: formData.phone_number
+                        phone_number: formData.phone_number,
+                        blood_group: formData.blood_group,
+                        blood_type: formData.blood_type
                     })
                 });
 
@@ -221,6 +233,47 @@ const Signup = () => {
                             <p className="classic-signin-error-text">{errors.phone_number}</p>
                         )}
                     </div>
+
+                    <div className="classic-signin-input-group">
+                        <label className="classic-signin-label">
+                            Blood Group
+                        </label>
+                        <select
+                            name="blood_group"
+                            value={formData.blood_group}
+                            onChange={handleChange}
+                            className={`classic-signin-input ${errors.blood_group ? 'classic-signin-input-error' : ''}`}
+                        >
+                            <option value="">Select blood group</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="AB">AB</option>
+                            <option value="O">O</option>
+                        </select>
+                        {errors.blood_group && (
+                            <p className="classic-signin-error-text">{errors.blood_group}</p>
+                        )}
+                    </div>
+
+                    <div className="classic-signin-input-group">
+                        <label className="classic-signin-label">
+                            Blood Type
+                        </label>
+                        <select
+                            name="blood_type"
+                            value={formData.blood_type}
+                            onChange={handleChange}
+                            className={`classic-signin-input ${errors.blood_type ? 'classic-signin-input-error' : ''}`}
+                        >
+                            <option value="">Select blood type</option>
+                            <option value="+">Positive (+)</option>
+                            <option value="-">Negative (-)</option>
+                        </select>
+                        {errors.blood_type && (
+                            <p className="classic-signin-error-text">{errors.blood_type}</p>
+                        )}
+                    </div>
+
                     <button
                         type="submit"
                         disabled={isLoading}
