@@ -20,7 +20,9 @@ class RegistrationController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'location' => 'required|string|max:255',
-            'phone_number' => 'required|string|max:20'
+            'phone_number' => 'required|string|max:20',
+            'blood_group' => 'required|string|in:A,B,AB,O',
+            'blood_type' => 'required|string|in:+,-'
         ]);
 
         if ($validator->fails()) {
@@ -37,7 +39,9 @@ class RegistrationController extends Controller
             'password' => Hash::make($request->password),
             'role' => $request->role ?? 'donor',
             'location' => $request->location,
-            'phone_number' => $request->phone_number
+            'phone_number' => $request->phone_number,
+            'blood_group' => $request->blood_group,
+            'blood_type' => $request->blood_type
         ]);
 
         return response()->json([
