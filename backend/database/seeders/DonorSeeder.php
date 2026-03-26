@@ -24,7 +24,9 @@ class DonorSeeder extends Seeder
                 'password' => Hash::make('donor123'),
                 'role' => 'donor',
                 'location' => 'Community Center',
-                'phone_number' => '+1122334455'
+                'phone_number' => '+1122334455',
+                'blood_group' => 'O',
+                'blood_type' => '+'
             ]
         );
     }

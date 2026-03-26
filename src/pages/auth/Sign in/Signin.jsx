@@ -76,8 +76,13 @@ const Signin = () => {
                     email: data.user.email,
                     role: data.user.role,
                     token: data.token,
-                    profilePicture: data.user.profilePicture
+                    profilePicture: data.user.profilePicture,
+                    blood_group: data.user.blood_group,
+                    blood_type: data.user.blood_type
                 };
+
+                console.log('Full API response:', data);
+                console.log('User data being stored:', userData);
 
                 // Handle successful login
                 login(userData);

@@ -6,6 +6,10 @@ const DonorDashboard = () => {
     const navigate = useNavigate();
     const { user, logout, checkAuth } = useAuth();
 
+    console.log('Current user data in dashboard:', user);
+    console.log('Blood group:', user?.blood_group);
+    console.log('Blood type:', user?.blood_type);
+
     useEffect(() => {
         const userData = checkAuth();
         if (!userData) {
