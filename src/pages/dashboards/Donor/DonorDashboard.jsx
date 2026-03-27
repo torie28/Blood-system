@@ -28,6 +28,9 @@ const DonorDashboard = () => {
     const [bloodRequests, setBloodRequests] = useState([]);
     const [requestsLoading, setRequestsLoading] = useState(false);
     const [schedulingRequestId, setSchedulingRequestId] = useState(null);
+    const [donationHistory, setDonationHistory] = useState([]);
+    const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+    const [historyLoading, setHistoryLoading] = useState(false);
 
     console.log('Current user data in dashboard:', user);
     console.log('Blood group:', user?.blood_group);
@@ -74,6 +77,20 @@ const DonorDashboard = () => {
             console.error('Failed to fetch blood requests:', error);
         } finally {
             setRequestsLoading(false);
+        }
+    };
+
+    const fetchDonationHistory = async () => {
+        setHistoryLoading(true);
+        try {
+            const response = await api.get('/donations/history');
+            console.log('Donation history response:', response);
+            setDonationHistory(response);
+        } catch (error) {
+            console.error('Failed to fetch donation history:', error);
+            alert('Failed to load donation history. Please try again.');
+        } finally {
+            setHistoryLoading(false);
         }
     };
 
@@ -246,6 +263,11 @@ const DonorDashboard = () => {
         }
     };
 
+    const handleShowHistory = () => {
+        setShowHistoryDialog(true);
+        fetchDonationHistory();
+    };
+
     return (
         <div className="classic-dashboard-container">
             {/* Header */}
@@ -307,16 +329,6 @@ const DonorDashboard = () => {
                         <div className="classic-card">
                             <h2 className="classic-card-title">Quick Actions</h2>
                             <div className="classic-actions-grid">
-                                <button className="classic-action-button">
-                                    <svg className="classic-action-icon" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
-                                    </svg>
-                                    <div className="classic-action-content">
-                                        <h4>Schedule Donation</h4>
-                                        <p>Book your next appointment</p>
-                                    </div>
-                                </button>
-
                                 <button className="classic-action-button profile" onClick={handleProfileClick}>
                                     <svg className="classic-action-icon" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
@@ -327,23 +339,13 @@ const DonorDashboard = () => {
                                     </div>
                                 </button>
 
-                                <button className="classic-action-button history">
+                                <button className="classic-action-button history" onClick={handleShowHistory}>
                                     <svg className="classic-action-icon" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                                     </svg>
                                     <div className="classic-action-content">
                                         <h4>Donation History</h4>
                                         <p>View past donations</p>
-                                    </div>
-                                </button>
-
-                                <button className="classic-action-button certificates">
-                                    <svg className="classic-action-icon" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7zm6 7a1 1 0 011 1v3a1 1 0 11-2 0v-3a1 1 0 011-1zm-3 3a1 1 0 100 2h.01a1 1 0 100-2H10zm-4 1a1 1 0 011-1h.01a1 1 0 110 2H7a1 1 0 01-1-1zm1-4a1 1 0 100 2h.01a1 1 0 100-2H7zm2 1a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zm4-2a1 1 0 100 2h.01a1 1 0 100-2H13z" clipRule="evenodd" />
-                                    </svg>
-                                    <div className="classic-action-content">
-                                        <h4>Certificates</h4>
-                                        <p>Download your certificates</p>
                                     </div>
                                 </button>
                             </div>
@@ -422,58 +424,86 @@ const DonorDashboard = () => {
                         </div>
 
                         {/* Blood Donation Requests */}
-                        <div className="classic-card">
-                            <h2 className="classic-card-title">Blood Donation Requests</h2>
+                        <div className="classic-card classic-requests-card">
+                            <h2 className="classic-card-title">🩸 Blood Donation Requests <span className="classic-pulse-dot"></span></h2>
                             <p style={{ fontSize: '13px', color: '#666', marginBottom: '15px' }}>
+                                <span className="classic-location-icon">📍</span>
                                 Requests in your area: {user?.location || 'N/A'}
                             </p>
 
                             {requestsLoading && bloodRequests.length === 0 ? (
-                                <div style={{ textAlign: 'center', padding: '20px' }}>
+                                <div className="classic-loading-container">
+                                    <div className="classic-loading-spinner"></div>
                                     <p>Loading requests...</p>
                                 </div>
                             ) : bloodRequests.length > 0 ? (
-                                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                                    {bloodRequests.slice(0, -1).map((request) => (
-                                        <div key={request.id} className="classic-donation-item" style={{ marginBottom: '10px' }}>
-                                            <div className="classic-donation-info">
-                                                <h4>{request.hospital?.name || 'Hospital'}</h4>
-                                                <p style={{ fontSize: '12px', color: '#666' }}>
-                                                    {request.blood_group} • {request.units_needed} units needed
-                                                </p>
-                                                <p style={{ fontSize: '11px', color: '#999' }}>
-                                                    {new Date(request.request_date).toLocaleDateString()}
-                                                </p>
-                                            </div>
-                                            <div className="classic-donation-details">
-                                                <div className={`classic-donation-status ${request.urgency_level?.name?.toLowerCase() || 'pending'}`}>
-                                                    {request.urgency_level?.name || 'Pending'}
+                                <div className="classic-requests-container">
+                                    {bloodRequests.slice(0, -1).map((request, index) => (
+                                        <div
+                                            key={request.id}
+                                            className="classic-request-popup"
+                                            style={{
+                                                animationDelay: `${index * 0.2}s`
+                                            }}
+                                        >
+                                            <div className="classic-request-header">
+                                                <div className="classic-hospital-info">
+                                                    <h4>
+                                                        <span className="classic-hospital-icon">🏥</span>
+                                                        {request.hospital?.name || 'Hospital'}
+                                                    </h4>
+                                                    <div className="classic-request-meta">
+                                                        <span className="classic-blood-type-badge">
+                                                            {request.blood_group}
+                                                        </span>
+                                                        <span className="classic-units-badge">
+                                                            {request.units_needed} units needed
+                                                        </span>
+                                                    </div>
+                                                    <p className="classic-request-date">
+                                                        <span className="classic-date-icon">📅</span>
+                                                        {new Date(request.request_date).toLocaleDateString()}
+                                                    </p>
                                                 </div>
-                                                <button
-                                                    className="classic-schedule-button"
-                                                    onClick={() => handleScheduleDonation(request.id)}
-                                                    disabled={schedulingRequestId === request.id}
-                                                    style={{
-                                                        marginLeft: '10px',
-                                                        padding: '6px 12px',
-                                                        fontSize: '12px',
-                                                        backgroundColor: schedulingRequestId === request.id ? '#ccc' : '#007bff',
-                                                        color: 'white',
-                                                        border: 'none',
-                                                        borderRadius: '4px',
-                                                        cursor: schedulingRequestId === request.id ? 'not-allowed' : 'pointer'
-                                                    }}
-                                                >
-                                                    {schedulingRequestId === request.id ? 'Scheduling...' : 'Schedule'}
-                                                </button>
+                                                <div className="classic-request-actions">
+                                                    <div className={`classic-urgency-badge ${request.urgency_level?.name?.toLowerCase() || 'pending'}`}>
+                                                        <span className="classic-urgency-icon">
+                                                            {request.urgency_level?.name === 'Critical' ? '🚨' :
+                                                                request.urgency_level?.name === 'High' ? '⚡' :
+                                                                    request.urgency_level?.name === 'Medium' ? '⏰' : '📍'}
+                                                        </span>
+                                                        {request.urgency_level?.name || 'Pending'}
+                                                    </div>
+                                                    <button
+                                                        className="classic-schedule-donation-button"
+                                                        onClick={() => handleScheduleDonation(request.id)}
+                                                        disabled={schedulingRequestId === request.id}
+                                                    >
+                                                        {schedulingRequestId === request.id ? (
+                                                            <>
+                                                                <span className="classic-button-spinner"></span>
+                                                                Scheduling...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <span className="classic-button-icon">❤️</span>
+                                                                Schedule
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div style={{ textAlign: 'center', padding: '20px' }}>
+                                <div className="classic-empty-state">
+                                    <div className="classic-empty-icon">🩸</div>
                                     <p style={{ color: '#666', fontSize: '13px' }}>
                                         No blood donation requests found in your area.
+                                    </p>
+                                    <p style={{ color: '#999', fontSize: '12px', marginTop: '10px' }}>
+                                        Check back later for new requests
                                     </p>
                                 </div>
                             )}
@@ -735,6 +765,126 @@ const DonorDashboard = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Donation History Dialog */}
+            {showHistoryDialog && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        padding: '30px',
+                        borderRadius: '8px',
+                        width: '90%',
+                        maxWidth: '700px',
+                        maxHeight: '80vh',
+                        overflowY: 'auto'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h2 style={{ margin: 0, color: '#333' }}>Donation History</h2>
+                            <button
+                                onClick={() => setShowHistoryDialog(false)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: '24px',
+                                    cursor: 'pointer',
+                                    color: '#666'
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {historyLoading ? (
+                            <div style={{ textAlign: 'center', padding: '40px' }}>
+                                <div style={{
+                                    border: '4px solid #f3f3f3',
+                                    borderTop: '4px solid #007bff',
+                                    borderRadius: '50%',
+                                    width: '40px',
+                                    height: '40px',
+                                    animation: 'spin 1s linear infinite',
+                                    margin: '0 auto 20px'
+                                }}></div>
+                                <p style={{ color: '#666' }}>Loading donation history...</p>
+                            </div>
+                        ) : donationHistory.length > 0 ? (
+                            <div>
+                                {donationHistory.map((donation) => (
+                                    <div key={donation.id} style={{
+                                        border: '1px solid #e0e0e0',
+                                        borderRadius: '8px',
+                                        padding: '20px',
+                                        marginBottom: '15px',
+                                        backgroundColor: '#f9f9f9'
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <div>
+                                                <h4 style={{ margin: '0 0 10px 0', color: '#333' }}>
+                                                    {donation.bloodRequest?.hospital?.name || 'Hospital'}
+                                                </h4>
+                                                <p style={{ margin: '5px 0', color: '#666', fontSize: '14px' }}>
+                                                    {donation.donation_date ? new Date(donation.donation_date).toLocaleDateString() : 'Date not set'}
+                                                </p>
+                                                <p style={{ margin: '5px 0', color: '#666', fontSize: '14px' }}>
+                                                    {donation.bloodRequest?.blood_group || 'N/A'} blood requested
+                                                </p>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <span style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '20px',
+                                                    fontSize: '12px',
+                                                    fontWeight: 'bold',
+                                                    backgroundColor: donation.status === 'completed' ? '#d4edda' :
+                                                        donation.status === 'scheduled' ? '#fff3cd' : '#f8d7da',
+                                                    color: donation.status === 'completed' ? '#155724' :
+                                                        donation.status === 'scheduled' ? '#856404' : '#721c24'
+                                                }}>
+                                                    {donation.status ? donation.status.charAt(0).toUpperCase() + donation.status.slice(1) : 'Unknown'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '40px' }}>
+                                <div style={{ fontSize: '48px', marginBottom: '20px' }}>🩸</div>
+                                <h3 style={{ color: '#666', marginBottom: '10px' }}>No Donation History</h3>
+                                <p style={{ color: '#999' }}>You haven't made any donations yet. Start by scheduling your first donation!</p>
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                            <button
+                                onClick={() => setShowHistoryDialog(false)}
+                                style={{
+                                    padding: '10px 20px',
+                                    border: '1px solid #ddd',
+                                    borderRadius: '4px',
+                                    backgroundColor: 'white',
+                                    color: '#666',
+                                    cursor: 'pointer',
+                                    fontSize: '14px'
+                                }}
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
