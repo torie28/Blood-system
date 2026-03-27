@@ -46,6 +46,20 @@ class HospitalSeeder extends Seeder
                 'address' => '654 Eldoret Street, Eldoret',
                 'location_id' => 5,
             ],
+            [
+                'name' => 'Arusha Regional Hospital',
+                'email' => 'arusha.regional@hospital.com',
+                'phone' => '+254-27-250123',
+                'address' => '123 Arusha Road, Arusha',
+                'location_id' => 6,
+            ],
+            [
+                'name' => 'Mount Meru Hospital',
+                'email' => 'mountmeru@hospital.com',
+                'phone' => '+254-27-250456',
+                'address' => '456 Mount Meru Street, Arusha',
+                'location_id' => 6,
+            ],
         ];
         
         foreach ($hospitals as $hospital) {

@@ -34,6 +34,8 @@ class DatabaseSeeder extends Seeder
             BloodGroupSeeder::class,
             HospitalSeeder::class,
             UrgencyLevelSeeder::class,
+            AdminSeeder::class,
+            BloodRequestSeeder::class,
         ]);
     }
 }
