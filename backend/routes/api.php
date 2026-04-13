@@ -29,6 +29,7 @@ Route::get('/donor-requests', [BloodRequestController::class, 'getDonorRequests'
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/donations/stats', [DonationController::class, 'getDonationStats']);
     Route::get('/donations/history', [DonationController::class, 'getDonationHistory']);
+    Route::get('/donations/scheduled', [DonationController::class, 'getScheduledDonations']);
     Route::post('/donations/schedule', [DonationController::class, 'scheduleDonation']);
     Route::get('/user/profile', [LoginController::class, 'profile']);
     Route::put('/user/profile', [LoginController::class, 'updateProfile']);

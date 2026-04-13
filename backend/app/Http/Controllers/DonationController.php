@@ -62,6 +62,26 @@ class DonationController extends Controller
     }
 
     /**
+     * Get scheduled donations for the authenticated donor
+     */
+    public function getScheduledDonations()
+    {
+        $user = Auth::user();
+        
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $scheduledDonations = Donation::where('donor_id', $user->id)
+            ->where('status', 'scheduled')
+            ->with(['bloodRequest.hospital', 'donor'])
+            ->orderBy('donation_date', 'asc')
+            ->get();
+
+        return response()->json($scheduledDonations);
+    }
+
+    /**
      * Schedule a donation for a blood request
      */
     public function scheduleDonation(Request $request)
