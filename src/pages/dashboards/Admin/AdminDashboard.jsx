@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 
-const API_BASE_URL = 'http://localhost:8001/api';
+const API_BASE_URL = 'http://localhost:8000/api';
 
 const AdminDashboard = () => {
     const { getAuthHeaders } = useAuth();
@@ -181,10 +181,7 @@ const AdminDashboard = () => {
 
     const fetchBloodRequests = async () => {
         try {
-            const headers = getAuthHeaders();
-            const response = await fetch(`${API_BASE_URL}/blood-requests`, {
-                headers: headers
-            });
+            const response = await fetch(`${API_BASE_URL}/blood-requests`);
             const data = await response.json();
             if (data.success) {
                 // Transform the data to match the frontend structure
@@ -211,12 +208,8 @@ const AdminDashboard = () => {
     const fetchDonorRequests = async () => {
         try {
             console.log('Fetching donor requests from:', `${API_BASE_URL}/donor-requests`);
-            const headers = getAuthHeaders();
-            console.log('Using headers:', headers);
 
-            const response = await fetch(`${API_BASE_URL}/donor-requests`, {
-                headers: headers
-            });
+            const response = await fetch(`${API_BASE_URL}/donor-requests`);
             console.log('Response status:', response.status);
             console.log('Response ok:', response.ok);
 

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import api from '../utils/api.js';
 
 const AuthContext = createContext();
 
@@ -23,6 +24,7 @@ export const AuthProvider = ({ children }) => {
       // Include token if it exists
       if (storedToken) {
         userData.token = storedToken;
+        api.setToken(storedToken);
       }
       setUser(userData);
       setIsAuthenticated(true);
@@ -35,6 +37,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
     if (userData.token) {
       localStorage.setItem('authToken', userData.token);
+      api.setToken(userData.token);
     }
   };
 
@@ -43,6 +46,7 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     localStorage.removeItem('user');
     localStorage.removeItem('authToken');
+    api.removeToken();
   };
 
   const checkAuth = () => {

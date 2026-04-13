@@ -24,6 +24,7 @@ class BloodRequestController extends Controller
         $donorLocation = $user->location;
         
         \Log::info('Donor location: ' . $donorLocation);
+        \Log::info('User ID: ' . $user->id);
         
         if (!$donorLocation) {
             return response()->json(['message' => 'Donor location not set'], 400);
@@ -35,9 +36,13 @@ class BloodRequestController extends Controller
             ->first();
 
         \Log::info('Found location: ', [$location]);
+        \Log::info('Location search query: %' . $donorLocation . '%');
 
         if (!$location) {
-            return response()->json(['message' => 'No matching location found'], 404);
+            // Log all available locations for debugging
+            $allLocations = Location::all();
+            \Log::info('All available locations:', $allLocations->toArray());
+            return response()->json(['message' => 'No matching location found for: ' . $donorLocation], 404);
         }
 
         \Log::info('Location ID: ' . $location->id);
@@ -50,6 +55,7 @@ class BloodRequestController extends Controller
             ->get();
 
         \Log::info('Blood requests found: ' . $bloodRequests->count());
+        \Log::info('Blood request details:', $bloodRequests->toArray());
 
         return response()->json([
             'success' => true,

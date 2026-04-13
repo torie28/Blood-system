@@ -3,11 +3,15 @@ const API_BASE_URL = 'http://127.0.0.1:8000/api';
 class ApiClient {
     constructor() {
         this.baseURL = API_BASE_URL;
-        this.token = localStorage.getItem('authToken');
+    }
+
+    getCurrentToken() {
+        return localStorage.getItem('authToken');
     }
 
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
+        const token = this.getCurrentToken();
 
         const config = {
             headers: {
@@ -19,8 +23,8 @@ class ApiClient {
         };
 
         // Add authorization token if available
-        if (this.token) {
-            config.headers.Authorization = `Bearer ${this.token}`;
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
         }
 
         try {
@@ -58,6 +62,7 @@ class ApiClient {
 
     async putWithFormData(endpoint, formData) {
         const url = `${this.baseURL}${endpoint}`;
+        const token = this.getCurrentToken();
 
         const config = {
             method: 'PUT',
@@ -68,8 +73,8 @@ class ApiClient {
         };
 
         // Add authorization token if available
-        if (this.token) {
-            config.headers.Authorization = `Bearer ${this.token}`;
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
         }
 
         try {
@@ -92,12 +97,10 @@ class ApiClient {
     }
 
     setToken(token) {
-        this.token = token;
         localStorage.setItem('authToken', token);
     }
 
     removeToken() {
-        this.token = null;
         localStorage.removeItem('authToken');
     }
 }

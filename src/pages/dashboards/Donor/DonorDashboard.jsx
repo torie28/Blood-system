@@ -438,7 +438,7 @@ const DonorDashboard = () => {
                                 </div>
                             ) : bloodRequests.length > 0 ? (
                                 <div className="classic-requests-container">
-                                    {bloodRequests.slice(0, -1).map((request, index) => (
+                                    {bloodRequests.map((request, index) => (
                                         <div
                                             key={request.id}
                                             className="classic-request-popup"

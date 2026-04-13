@@ -14,7 +14,7 @@ class LocationSeeder extends Seeder
             ['city' => 'Mombasa', 'region' => 'Mombasa County'],
             ['city' => 'Kisumu', 'region' => 'Kisumu County'],
             ['city' => 'Nakuru', 'region' => 'Nakuru County'],
-            ['city' => 'Eldoret', 'region' => 'Uasin Gishu County'],
+            ['city' => 'Mwanza', 'region' => 'Uasin Gishu County'],
             ['city' => 'Arusha', 'region' => 'Arusha County'],
         ];
         
