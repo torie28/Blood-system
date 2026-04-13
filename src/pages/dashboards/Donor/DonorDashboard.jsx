@@ -31,6 +31,8 @@ const DonorDashboard = () => {
     const [donationHistory, setDonationHistory] = useState([]);
     const [showHistoryDialog, setShowHistoryDialog] = useState(false);
     const [historyLoading, setHistoryLoading] = useState(false);
+    const [scheduledDonations, setScheduledDonations] = useState([]);
+    const [scheduledLoading, setScheduledLoading] = useState(false);
 
     console.log('Current user data in dashboard:', user);
     console.log('Blood group:', user?.blood_group);
@@ -94,6 +96,19 @@ const DonorDashboard = () => {
         }
     };
 
+    const fetchScheduledDonations = async () => {
+        setScheduledLoading(true);
+        try {
+            const response = await api.get('/donations/scheduled');
+            console.log('Scheduled donations response:', response);
+            setScheduledDonations(response);
+        } catch (error) {
+            console.error('Failed to fetch scheduled donations:', error);
+        } finally {
+            setScheduledLoading(false);
+        }
+    };
+
     useEffect(() => {
         const userData = checkAuth();
         if (!userData) {
@@ -102,6 +117,7 @@ const DonorDashboard = () => {
             fetchDonationStats();
             fetchUserProfile();
             fetchBloodRequests();
+            fetchScheduledDonations();
         }
     }, [navigate, checkAuth, user]);
 
@@ -252,6 +268,8 @@ const DonorDashboard = () => {
                 fetchBloodRequests();
                 // Refresh donation stats
                 fetchDonationStats();
+                // Refresh scheduled donations
+                fetchScheduledDonations();
             } else {
                 alert('Failed to schedule donation: ' + (response.message || 'Unknown error'));
             }
@@ -351,34 +369,58 @@ const DonorDashboard = () => {
                             </div>
                         </div>
 
-                        {/* Recent Donations */}
+                        {/* Scheduled Donations */}
                         <div className="classic-card">
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                <h2 className="classic-card-title" style={{ marginBottom: 0 }}>Recent Donations</h2>
-                                <a href="#" style={{ color: '#007bff', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold' }}>View All</a>
+                                <h2 className="classic-card-title" style={{ marginBottom: 0 }}>Scheduled Donations</h2>
+                                <a href="#" onClick={handleShowHistory} style={{ color: '#007bff', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer' }}>View History</a>
                             </div>
 
-                            <div className="classic-donation-item">
-                                <div className="classic-donation-info">
-                                    <h4>Central Blood Bank</h4>
-                                    <p>February 15, 2024</p>
+                            {scheduledLoading && scheduledDonations.length === 0 ? (
+                                <div className="classic-loading-container">
+                                    <div className="classic-loading-spinner"></div>
+                                    <p>Loading scheduled donations...</p>
                                 </div>
-                                <div className="classic-donation-details">
-                                    <div className="classic-donation-amount">450ml</div>
-                                    <div className="classic-donation-status">Completed</div>
+                            ) : scheduledDonations.length > 0 ? (
+                                scheduledDonations.map((donation) => (
+                                    <div key={donation.id} className="classic-donation-item">
+                                        <div className="classic-donation-info">
+                                            <h4>
+                                                <span className="classic-hospital-icon">{'\ud83c\udfe5'}</span>
+                                                {donation.blood_request?.hospital?.name || donation.blood_request?.hospital?.hospital_name || 'Hospital'}
+                                            </h4>
+                                            <p>
+                                                <span className="classic-date-icon">{'\ud83d\udcc5'}</span>
+                                                {new Date(donation.donation_date).toLocaleDateString()}
+                                            </p>
+                                            <p style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                                                <span className="classic-donor-icon">{'\ud83d\udc64'}</span>
+                                                {donation.donor?.name || user?.name || 'Donor'} ({donation.donor?.blood_group}{donation.donor?.blood_type || user?.blood_group}{user?.blood_type || ''})
+                                            </p>
+                                            <p style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                                                <span className="classic-phone-icon">{'\ud83d\udcde'}</span>
+                                                {donation.donor?.phone_number || user?.phone_number || 'N/A'}
+                                            </p>
+                                        </div>
+                                        <div className="classic-donation-details">
+                                            <div className="classic-donation-amount">450ml</div>
+                                            <div className={`classic-donation-status ${donation.status}`}>
+                                                {donation.status.charAt(0).toUpperCase() + donation.status.slice(1)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="classic-empty-state">
+                                    <div className="classic-empty-icon">{'\ud83d\udcc5'}</div>
+                                    <p style={{ color: '#666', fontSize: '13px' }}>
+                                        No scheduled donations found.
+                                    </p>
+                                    <p style={{ color: '#999', fontSize: '12px', marginTop: '10px' }}>
+                                        Schedule a donation from the available requests
+                                    </p>
                                 </div>
-                            </div>
-
-                            <div className="classic-donation-item">
-                                <div className="classic-donation-info">
-                                    <h4>City Hospital</h4>
-                                    <p>January 8, 2024</p>
-                                </div>
-                                <div className="classic-donation-details">
-                                    <div className="classic-donation-amount">450ml</div>
-                                    <div className="classic-donation-status">Completed</div>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </div>
 
