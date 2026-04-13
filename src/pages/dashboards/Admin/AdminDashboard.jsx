@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext.jsx';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = 'http://localhost:8001/api';
 
 const AdminDashboard = () => {
+    const { getAuthHeaders } = useAuth();
     const [activeTab, setActiveTab] = useState('requests');
     const [hospitalRequests, setHospitalRequests] = useState([]);
     const [donorStats, setDonorStats] = useState({});
     const [bloodInventory, setBloodInventory] = useState({});
     const [selectedLocation, setSelectedLocation] = useState('');
+    const [selectedDonorRequestLocation, setSelectedDonorRequestLocation] = useState('');
     const [loading, setLoading] = useState(true);
     const [showHospitalDialog, setShowHospitalDialog] = useState(false);
     const [hospitals, setHospitals] = useState([]);
@@ -22,9 +25,11 @@ const AdminDashboard = () => {
         address: ''
     });
     const [donorRequests, setDonorRequests] = useState([]);
+    const [bloodRequests, setBloodRequests] = useState([]);
     const [showDonorRequestDialog, setShowDonorRequestDialog] = useState(false);
     const [bloodTypes, setBloodTypes] = useState([]);
     const [urgencyLevels, setUrgencyLevels] = useState([]);
+    const [locations, setLocations] = useState([]);
     const [newDonorRequest, setNewDonorRequest] = useState({
         title: '',
         description: '',
@@ -43,6 +48,9 @@ const AdminDashboard = () => {
         fetchHospitals();
         fetchBloodTypes();
         fetchUrgencyLevels();
+        fetchLocations();
+        fetchBloodRequests();
+        fetchDonorRequests();
         fetchMockData();
     }, []);
 
@@ -127,6 +135,123 @@ const AdminDashboard = () => {
         }
     };
 
+    const fetchLocations = async () => {
+        try {
+            console.log('Testing API endpoint...');
+
+            // First, let's test if the endpoint exists
+            const testResponse = await fetch(`${API_BASE_URL}/locations`);
+            console.log('Test response status:', testResponse.status);
+            console.log('Test response ok:', testResponse.ok);
+
+            if (!testResponse.ok) {
+                throw new Error(`HTTP error! status: ${testResponse.status}`);
+            }
+
+            const data = await testResponse.json();
+            console.log('Raw response from location table:', data);
+            console.log('Response structure:', {
+                success: data.success,
+                hasData: !!data.data,
+                dataType: typeof data.data,
+                dataLength: data.data ? data.data.length : 'undefined',
+                firstItem: data.data && data.data.length > 0 ? data.data[0] : 'none'
+            });
+
+            if (data.success && data.data && Array.isArray(data.data)) {
+                console.log('Setting locations:', data.data);
+                setLocations(data.data);
+            } else {
+                console.error('Invalid response format:', data);
+                // Let's try a different approach - maybe the response is just an array
+                if (Array.isArray(data)) {
+                    console.log('Response is direct array, using it:', data);
+                    setLocations(data);
+                } else {
+                    throw new Error('Invalid response format');
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch locations from database:', error.message);
+            console.error('Full error:', error);
+            // Don't set fallback locations - only use database data
+            setLocations([]);
+        }
+    };
+
+    const fetchBloodRequests = async () => {
+        try {
+            const headers = getAuthHeaders();
+            const response = await fetch(`${API_BASE_URL}/blood-requests`, {
+                headers: headers
+            });
+            const data = await response.json();
+            if (data.success) {
+                // Transform the data to match the frontend structure
+                const transformedRequests = data.requests.map(request => ({
+                    id: request.id,
+                    title: `Blood Request - ${request.blood_group}`,
+                    hospitalName: request.hospital?.name || 'Unknown Hospital',
+                    location: request.location?.city || request.location?.region || 'Unknown Location',
+                    bloodType: request.blood_group,
+                    units: request.units_needed,
+                    urgency: request.urgencyLevel?.level || 'Medium',
+                    requestDate: request.request_date,
+                    deadline: request.request_date,
+                    status: request.status,
+                    description: `Urgent need for ${request.units_needed} units of ${request.blood_group} blood at ${request.hospital?.name || 'Unknown Hospital'}`
+                }));
+                setBloodRequests(transformedRequests);
+            }
+        } catch (error) {
+            console.error('Error fetching blood requests:', error);
+        }
+    };
+
+    const fetchDonorRequests = async () => {
+        try {
+            console.log('Fetching donor requests from:', `${API_BASE_URL}/donor-requests`);
+            const headers = getAuthHeaders();
+            console.log('Using headers:', headers);
+
+            const response = await fetch(`${API_BASE_URL}/donor-requests`, {
+                headers: headers
+            });
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+
+            const data = await response.json();
+            console.log('Raw response data:', data);
+
+            if (data.success) {
+                console.log('Number of requests received:', data.requests?.length);
+                // Transform the data to match the frontend structure
+                const transformedRequests = data.requests.map(request => ({
+                    id: request.id,
+                    title: request.title || `Blood Request - ${request.blood_group}`,
+                    description: request.description || `Need ${request.units_needed} units of ${request.blood_group} blood.`,
+                    bloodType: request.blood_group,
+                    units: request.units_needed,
+                    urgency: request.urgencyLevel?.level || 'Medium',
+                    location: request.location?.city || request.location?.region || 'Unknown Location',
+                    hospitalName: request.hospital?.name || 'Unknown Hospital',
+                    contactPerson: request.contact_person || 'N/A',
+                    contactNumber: request.contact_number || 'N/A',
+                    deadline: request.deadline || request.request_date,
+                    postedDate: request.request_date,
+                    status: request.status || 'active'
+                }));
+                console.log('Transformed requests:', transformedRequests);
+                setDonorRequests(transformedRequests);
+            } else {
+                console.error('API returned unsuccessful response:', data);
+            }
+        } catch (error) {
+            console.error('Error fetching donor requests:', error);
+            console.error('Full error details:', error.message);
+        }
+    };
+
     const fetchMockData = () => {
         // This is still mock data for other parts of the dashboard
         setTimeout(() => {
@@ -200,49 +325,22 @@ const AdminDashboard = () => {
                 'AB-': 5
             });
 
-            setDonorRequests([
-                {
-                    id: 1,
-                    title: 'Urgent Blood Donation Drive - O+ Needed',
-                    description: 'We urgently need O+ blood type donors for emergency surgeries at City General Hospital. Your donation can save lives.',
-                    bloodType: 'O+',
-                    units: 10,
-                    urgency: 'High',
-                    location: 'Nairobi',
-                    hospitalName: 'City General Hospital',
-                    contactPerson: 'Dr. Sarah Johnson',
-                    contactNumber: '+254-712-345-678',
-                    deadline: '2024-03-30',
-                    postedDate: '2024-03-24',
-                    status: 'active'
-                },
-                {
-                    id: 2,
-                    title: 'Blood Donation Camp - All Types Welcome',
-                    description: 'Join our weekend blood donation camp. All blood types needed to replenish our blood bank supplies.',
-                    bloodType: 'All',
-                    units: 50,
-                    urgency: 'Medium',
-                    location: 'Mombasa',
-                    hospitalName: 'St. Mary Medical Center',
-                    contactPerson: 'Nurse Michael Kamau',
-                    contactNumber: '+254-723-456-789',
-                    deadline: '2024-04-05',
-                    postedDate: '2024-03-23',
-                    status: 'active'
-                }
-            ]);
+            // Donor requests are now fetched from database, removing mock data
 
             setLoading(false);
         }, 1000);
     };
 
     const filteredRequests = selectedLocation
-        ? hospitalRequests.filter(req => req.location === selectedLocation)
-        : hospitalRequests;
+        ? bloodRequests.filter(req => req.location === selectedLocation)
+        : bloodRequests;
+
+    const filteredDonorRequests = selectedDonorRequestLocation
+        ? donorRequests.filter(req => req.location === selectedDonorRequestLocation)
+        : donorRequests;
 
     const handleRequestResponse = (requestId, response) => {
-        setHospitalRequests(prev =>
+        setBloodRequests(prev =>
             prev.map(req =>
                 req.id === requestId
                     ? { ...req, status: response === 'approve' ? 'approved' : 'rejected' }
@@ -252,7 +350,16 @@ const AdminDashboard = () => {
     };
 
     const getUniqueLocations = () => {
-        return [...new Set(hospitalRequests.map(req => req.location))];
+        return [...new Set(bloodRequests.map(req => req.location))];
+    };
+
+    const getUniqueDonorRequestLocations = () => {
+        return [...new Set(donorRequests.map(req => req.location))];
+    };
+
+    const getDatabaseLocations = () => {
+        // Only return locations from the database
+        return locations.map(location => location.name);
     };
 
     const getUrgencyColor = (urgency) => {
@@ -410,35 +517,83 @@ const AdminDashboard = () => {
         });
     };
 
-    const handleAddDonorRequest = () => {
+    const handleAddDonorRequest = async () => {
         if (newDonorRequest.title && newDonorRequest.description && newDonorRequest.bloodType &&
             newDonorRequest.units && newDonorRequest.location && newDonorRequest.hospitalName &&
             newDonorRequest.contactPerson && newDonorRequest.contactNumber && newDonorRequest.deadline) {
 
-            const newRequest = {
-                ...newDonorRequest,
-                id: donorRequests.length + 1,
-                postedDate: new Date().toISOString().split('T')[0],
-                status: 'active'
-            };
+            try {
+                // Find hospital ID from hospital name
+                const hospital = hospitals.find(h => h.name === newDonorRequest.hospitalName);
+                if (!hospital) {
+                    alert('Please select a valid hospital.');
+                    return;
+                }
 
-            setDonorRequests([newRequest, ...donorRequests]);
+                // Find urgency level ID
+                const urgencyLevel = urgencyLevels.find(level => {
+                    const levelName = typeof level === 'object' ? level.level || level.name || level.urgency : level;
+                    return levelName === newDonorRequest.urgency;
+                });
+                if (!urgencyLevel) {
+                    alert('Please select a valid urgency level.');
+                    return;
+                }
 
-            // Reset form
-            setNewDonorRequest({
-                title: '',
-                description: '',
-                bloodType: '',
-                units: '',
-                urgency: 'Medium',
-                location: '',
-                hospitalName: '',
-                contactPerson: '',
-                contactNumber: '',
-                deadline: ''
-            });
-            setShowDonorRequestDialog(false);
-            alert('Donor request posted successfully!');
+                // Find location ID
+                const location = locations.find(loc => loc.name === newDonorRequest.location);
+                if (!location) {
+                    alert('Please select a valid location.');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE_URL}/donor-requests`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title: newDonorRequest.title,
+                        description: newDonorRequest.description,
+                        hospital_id: hospital.id,
+                        blood_group: newDonorRequest.bloodType,
+                        units_needed: parseInt(newDonorRequest.units),
+                        urgency_level_id: urgencyLevel.id,
+                        location_id: location.id,
+                        contact_person: newDonorRequest.contactPerson,
+                        contact_number: newDonorRequest.contactNumber,
+                        deadline: newDonorRequest.deadline
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Refresh donor requests list
+                    await fetchDonorRequests();
+
+                    // Reset form
+                    setNewDonorRequest({
+                        title: '',
+                        description: '',
+                        bloodType: '',
+                        units: '',
+                        urgency: 'Medium',
+                        location: '',
+                        hospitalName: '',
+                        contactPerson: '',
+                        contactNumber: '',
+                        deadline: ''
+                    });
+                    setShowDonorRequestDialog(false);
+                    alert('Donor request created successfully!');
+                } else {
+                    alert('Failed to create donor request: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error creating donor request:', error);
+                alert('Error creating donor request. Please try again.');
+            }
         } else {
             alert('Please fill in all required fields.');
         }
@@ -1003,13 +1158,40 @@ const AdminDashboard = () => {
                         {activeTab === 'donor-requests' && (
                             <div className="admin-tab-content">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h3 className="text-xl font-semibold text-gray-800">Donor Requests Management</h3>
+                                    <div>
+                                        <h3 className="text-xl font-semibold text-gray-800">Donor Requests Management</h3>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            Total Requests Posted: <span className="font-semibold text-blue-600">{donorRequests.length}</span>
+                                        </p>
+                                    </div>
                                     <button
                                         onClick={() => setShowDonorRequestDialog(true)}
                                         className="classic-add-hospital-button"
                                     >
                                         Post New Request
                                     </button>
+                                </div>
+
+                                {/* Location Filter for Donor Requests */}
+                                <div className="admin-filter-section mb-4">
+                                    <label className="admin-filter-label">
+                                        Filter by Location
+                                    </label>
+                                    <select
+                                        value={selectedDonorRequestLocation}
+                                        onChange={(e) => setSelectedDonorRequestLocation(e.target.value)}
+                                        className="admin-filter-select"
+                                    >
+                                        <option value="">All Locations</option>
+                                        {(() => {
+                                            console.log('Rendering location filter, current locations:', locations);
+                                            return locations.map(location => (
+                                                <option key={location.id} value={location.name}>
+                                                    {location.name}
+                                                </option>
+                                            ));
+                                        })()}
+                                    </select>
                                 </div>
 
                                 {/* Donor Requests Table */}
@@ -1029,14 +1211,17 @@ const AdminDashboard = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {donorRequests.length === 0 ? (
+                                            {filteredDonorRequests.length === 0 ? (
                                                 <tr>
                                                     <td colSpan="9" className="text-center py-8 text-gray-500">
-                                                        No donor requests posted yet. Click "Post New Request" to create your first request.
+                                                        {donorRequests.length === 0
+                                                            ? "No donor requests posted yet. Click 'Post New Request' to create your first request."
+                                                            : "No donor requests found for the selected location."
+                                                        }
                                                     </td>
                                                 </tr>
                                             ) : (
-                                                donorRequests.map(request => (
+                                                filteredDonorRequests.map(request => (
                                                     <tr key={request.id}>
                                                         <td className="font-medium">
                                                             <div>
@@ -1201,15 +1386,20 @@ const AdminDashboard = () => {
                                                 <label className="classic-form-label required">
                                                     Location
                                                 </label>
-                                                <input
-                                                    type="text"
+                                                <select
                                                     name="location"
                                                     value={newDonorRequest.location}
                                                     onChange={handleDonorRequestInputChange}
                                                     className="classic-form-input"
-                                                    placeholder="Enter location"
                                                     required
-                                                />
+                                                >
+                                                    <option value="">Select location</option>
+                                                    {getDatabaseLocations().map(location => (
+                                                        <option key={location} value={location}>
+                                                            {location}
+                                                        </option>
+                                                    ))}
+                                                </select>
                                             </div>
                                         </div>
 

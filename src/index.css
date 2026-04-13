@@ -2525,3 +2525,79 @@
     justify-content: center;
   }
 }
+
+/* Signup Grid Layout Styles */
+.signup-grid-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+  transform-style: preserve-3d;
+  transform: translateZ(10px);
+}
+
+.signup-left-column,
+.signup-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.signup-button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 30px 0 20px;
+  transform-style: preserve-3d;
+  transform: translateZ(15px);
+}
+
+.signup-button-container .classic-signin-submit-button {
+  width: auto;
+  min-width: 200px;
+  max-width: 300px;
+  padding: 16px 32px;
+}
+
+/* Responsive Design for Signup Grid */
+@media (max-width: 768px) {
+  .signup-grid-container {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .signup-left-column,
+  .signup-right-column {
+    gap: 15px;
+  }
+  
+  .signup-button-container {
+    margin: 20px 0 15px;
+  }
+  
+  .signup-button-container .classic-signin-submit-button {
+    width: 100%;
+    min-width: auto;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .signup-grid-container {
+    gap: 12px;
+  }
+  
+  .signup-left-column,
+  .signup-right-column {
+    gap: 12px;
+  }
+  
+  .classic-signin-form {
+    padding: 30px 25px;
+  }
+  
+  .signup-button-container .classic-signin-submit-button {
+    padding: 14px 24px;
+    font-size: 15px;
+  }
+}

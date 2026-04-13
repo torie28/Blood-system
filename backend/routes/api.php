@@ -29,4 +29,10 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Blood request routes
     Route::get('/blood-requests/location', [BloodRequestController::class, 'getRequestsByLocation']);
+    Route::get('/blood-requests', [BloodRequestController::class, 'index']);
+    Route::post('/blood-requests', [BloodRequestController::class, 'store']);
+    
+    // Donor request routes (these are blood donation campaigns/requests)
+    Route::get('/donor-requests', [BloodRequestController::class, 'getDonorRequests']);
+    Route::post('/donor-requests', [BloodRequestController::class, 'createDonorRequest']);
 });

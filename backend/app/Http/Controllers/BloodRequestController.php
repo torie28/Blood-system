@@ -58,6 +58,53 @@ class BloodRequestController extends Controller
     }
 
     /**
+     * Get donor requests (blood donation campaigns)
+     */
+    public function getDonorRequests()
+    {
+        $donorRequests = BloodRequest::with(['hospital', 'urgencyLevel', 'location'])
+            ->where('status', '!=', 'fulfilled')
+            ->orderBy('request_date', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'requests' => $donorRequests
+        ]);
+    }
+
+    /**
+     * Create a new donor request (blood donation campaign)
+     */
+    public function createDonorRequest(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'hospital_id' => 'required|exists:hospitals,id',
+            'blood_group' => 'required|in:A+,A-,B+,B-,AB+,AB-,O+,O-,All',
+            'units_needed' => 'required|integer|min:1',
+            'urgency_level_id' => 'required|exists:urgency_levels,id',
+            'location_id' => 'required|exists:locations,id',
+            'contact_person' => 'required|string|max:255',
+            'contact_number' => 'required|string|max:20',
+            'deadline' => 'required|date|after:today'
+        ]);
+
+        $donorRequest = BloodRequest::create([
+            ...$validated,
+            'status' => 'active',
+            'created_by' => Auth::id()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Donor request created successfully',
+            'request' => $donorRequest->load(['hospital', 'urgencyLevel', 'location'])
+        ]);
+    }
+
+    /**
      * Get all blood requests (admin use)
      */
     public function index()

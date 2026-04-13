@@ -82,7 +82,7 @@ const Signup = () => {
             setErrors({});
 
             try {
-                const response = await fetch('http://localhost:8000/api/register', {
+                const response = await fetch('http://127.0.0.1:8000/api/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -132,155 +132,163 @@ const Signup = () => {
                         </div>
                     )}
 
-                    <div className="classic-signin-input-group">
-                        <label className="classic-signin-label">
-                            Name
-                        </label>
-                        <input
-                            name="name"
-                            type="text"
-                            value={formData.name}
-                            onChange={handleChange}
-                            className={`classic-signin-input ${errors.name ? 'classic-signin-input-error' : ''}`}
-                            placeholder="Enter your full name"
-                        />
-                        {errors.name && (
-                            <p className="classic-signin-error-text">{errors.name}</p>
-                        )}
+                    <div className="signup-grid-container">
+                        <div className="signup-left-column">
+                            <div className="classic-signin-input-group">
+                                <label className="classic-signin-label">
+                                    Name
+                                </label>
+                                <input
+                                    name="name"
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    className={`classic-signin-input ${errors.name ? 'classic-signin-input-error' : ''}`}
+                                    placeholder="Enter your full name"
+                                />
+                                {errors.name && (
+                                    <p className="classic-signin-error-text">{errors.name}</p>
+                                )}
+                            </div>
+
+                            <div className="classic-signin-input-group">
+                                <label className="classic-signin-label">
+                                    Email Address
+                                </label>
+                                <input
+                                    name="email"
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    className={`classic-signin-input ${errors.email ? 'classic-signin-input-error' : ''}`}
+                                    placeholder="Enter your email"
+                                />
+                                {errors.email && (
+                                    <p className="classic-signin-error-text">{errors.email}</p>
+                                )}
+                            </div>
+
+                            <div className="classic-signin-input-group">
+                                <label className="classic-signin-label">
+                                    Password
+                                </label>
+                                <input
+                                    name="password"
+                                    type="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    className={`classic-signin-input ${errors.password ? 'classic-signin-input-error' : ''}`}
+                                    placeholder="Enter your password"
+                                />
+                                {errors.password && (
+                                    <p className="classic-signin-error-text">{errors.password}</p>
+                                )}
+                            </div>
+
+                            <div className="classic-signin-input-group">
+                                <label className="classic-signin-label">
+                                    Confirm Password
+                                </label>
+                                <input
+                                    name="confirmPassword"
+                                    type="password"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    className={`classic-signin-input ${errors.confirmPassword ? 'classic-signin-input-error' : ''}`}
+                                    placeholder="Confirm your password"
+                                />
+                                {errors.confirmPassword && (
+                                    <p className="classic-signin-error-text">{errors.confirmPassword}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="signup-right-column">
+                            <div className="classic-signin-input-group">
+                                <label className="classic-signin-label">
+                                    Location
+                                </label>
+                                <input
+                                    name="location"
+                                    type="text"
+                                    value={formData.location}
+                                    onChange={handleChange}
+                                    className={`classic-signin-input ${errors.location ? 'classic-signin-input-error' : ''}`}
+                                    placeholder="Enter your location"
+                                />
+                                {errors.location && (
+                                    <p className="classic-signin-error-text">{errors.location}</p>
+                                )}
+                            </div>
+
+                            <div className="classic-signin-input-group">
+                                <label className="classic-signin-label">
+                                    Phone Number
+                                </label>
+                                <input
+                                    name="phone_number"
+                                    type="tel"
+                                    value={formData.phone_number}
+                                    onChange={handleChange}
+                                    className={`classic-signin-input ${errors.phone_number ? 'classic-signin-input-error' : ''}`}
+                                    placeholder="Enter your phone number"
+                                />
+                                {errors.phone_number && (
+                                    <p className="classic-signin-error-text">{errors.phone_number}</p>
+                                )}
+                            </div>
+
+                            <div className="classic-signin-input-group">
+                                <label className="classic-signin-label">
+                                    Blood Group
+                                </label>
+                                <select
+                                    name="blood_group"
+                                    value={formData.blood_group}
+                                    onChange={handleChange}
+                                    className={`classic-signin-input ${errors.blood_group ? 'classic-signin-input-error' : ''}`}
+                                >
+                                    <option value="">Select blood group</option>
+                                    <option value="A">A</option>
+                                    <option value="B">B</option>
+                                    <option value="AB">AB</option>
+                                    <option value="O">O</option>
+                                </select>
+                                {errors.blood_group && (
+                                    <p className="classic-signin-error-text">{errors.blood_group}</p>
+                                )}
+                            </div>
+
+                            <div className="classic-signin-input-group">
+                                <label className="classic-signin-label">
+                                    Blood Type
+                                </label>
+                                <select
+                                    name="blood_type"
+                                    value={formData.blood_type}
+                                    onChange={handleChange}
+                                    className={`classic-signin-input ${errors.blood_type ? 'classic-signin-input-error' : ''}`}
+                                >
+                                    <option value="">Select blood type</option>
+                                    <option value="+">Positive (+)</option>
+                                    <option value="-">Negative (-)</option>
+                                </select>
+                                {errors.blood_type && (
+                                    <p className="classic-signin-error-text">{errors.blood_type}</p>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="classic-signin-input-group">
-                        <label className="classic-signin-label">
-                            Email Address
-                        </label>
-                        <input
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className={`classic-signin-input ${errors.email ? 'classic-signin-input-error' : ''}`}
-                            placeholder="Enter your email"
-                        />
-                        {errors.email && (
-                            <p className="classic-signin-error-text">{errors.email}</p>
-                        )}
-                    </div>
-
-                    <div className="classic-signin-input-group">
-                        <label className="classic-signin-label">
-                            Password
-                        </label>
-                        <input
-                            name="password"
-                            type="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            className={`classic-signin-input ${errors.password ? 'classic-signin-input-error' : ''}`}
-                            placeholder="Enter your password"
-                        />
-                        {errors.password && (
-                            <p className="classic-signin-error-text">{errors.password}</p>
-                        )}
-                    </div>
-
-                    <div className="classic-signin-input-group">
-                        <label className="classic-signin-label">
-                            Confirm Password
-                        </label>
-                        <input
-                            name="confirmPassword"
-                            type="password"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            className={`classic-signin-input ${errors.confirmPassword ? 'classic-signin-input-error' : ''}`}
-                            placeholder="Confirm your password"
-                        />
-                        {errors.confirmPassword && (
-                            <p className="classic-signin-error-text">{errors.confirmPassword}</p>
-                        )}
-                    </div>
-
-                    <div className="classic-signin-input-group">
-                        <label className="classic-signin-label">
-                            Location
-                        </label>
-                        <input
-                            name="location"
-                            type="text"
-                            value={formData.location}
-                            onChange={handleChange}
-                            className={`classic-signin-input ${errors.location ? 'classic-signin-input-error' : ''}`}
-                            placeholder="Enter your location"
-                        />
-                        {errors.location && (
-                            <p className="classic-signin-error-text">{errors.location}</p>
-                        )}
-                    </div>
-
-                    <div className="classic-signin-input-group">
-                        <label className="classic-signin-label">
-                            Phone Number
-                        </label>
-                        <input
-                            name="phone_number"
-                            type="tel"
-                            value={formData.phone_number}
-                            onChange={handleChange}
-                            className={`classic-signin-input ${errors.phone_number ? 'classic-signin-input-error' : ''}`}
-                            placeholder="Enter your phone number"
-                        />
-                        {errors.phone_number && (
-                            <p className="classic-signin-error-text">{errors.phone_number}</p>
-                        )}
-                    </div>
-
-                    <div className="classic-signin-input-group">
-                        <label className="classic-signin-label">
-                            Blood Group
-                        </label>
-                        <select
-                            name="blood_group"
-                            value={formData.blood_group}
-                            onChange={handleChange}
-                            className={`classic-signin-input ${errors.blood_group ? 'classic-signin-input-error' : ''}`}
+                    <div className="signup-button-container">
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="classic-signin-submit-button"
                         >
-                            <option value="">Select blood group</option>
-                            <option value="A">A</option>
-                            <option value="B">B</option>
-                            <option value="AB">AB</option>
-                            <option value="O">O</option>
-                        </select>
-                        {errors.blood_group && (
-                            <p className="classic-signin-error-text">{errors.blood_group}</p>
-                        )}
+                            {isLoading ? 'Creating Account...' : 'Sign Up'}
+                        </button>
                     </div>
-
-                    <div className="classic-signin-input-group">
-                        <label className="classic-signin-label">
-                            Blood Type
-                        </label>
-                        <select
-                            name="blood_type"
-                            value={formData.blood_type}
-                            onChange={handleChange}
-                            className={`classic-signin-input ${errors.blood_type ? 'classic-signin-input-error' : ''}`}
-                        >
-                            <option value="">Select blood type</option>
-                            <option value="+">Positive (+)</option>
-                            <option value="-">Negative (-)</option>
-                        </select>
-                        {errors.blood_type && (
-                            <p className="classic-signin-error-text">{errors.blood_type}</p>
-                        )}
-                    </div>
-
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="classic-signin-submit-button"
-                    >
-                        {isLoading ? 'Creating Account...' : 'Sign Up'}
-                    </button>
 
                     <div className="classic-signin-register-section">
                         Already have an account?{' '}

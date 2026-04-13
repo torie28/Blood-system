@@ -19,7 +19,12 @@ class BloodRequest extends Model
         'status',
         'request_date',
         'location_id',
-        'created_by'
+        'created_by',
+        'title',
+        'description',
+        'contact_person',
+        'contact_number',
+        'deadline'
     ];
 
     protected $casts = [
