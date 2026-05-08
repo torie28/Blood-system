@@ -6,7 +6,7 @@ const API_BASE_URL = 'http://localhost:8000/api';
 
 const AdminDashboard = () => {
     const { getAuthHeaders } = useAuth();
-    const [activeTab, setActiveTab] = useState('requests');
+    const [activeTab, setActiveTab] = useState('inter-hospital-requests');
     const [hospitalRequests, setHospitalRequests] = useState([]);
     const [donorStats, setDonorStats] = useState({});
     const [bloodInventory, setBloodInventory] = useState({});
@@ -26,22 +26,10 @@ const AdminDashboard = () => {
     });
     const [donorRequests, setDonorRequests] = useState([]);
     const [bloodRequests, setBloodRequests] = useState([]);
-    const [showDonorRequestDialog, setShowDonorRequestDialog] = useState(false);
+    const [interHospitalRequests, setInterHospitalRequests] = useState([]);
     const [bloodTypes, setBloodTypes] = useState([]);
     const [urgencyLevels, setUrgencyLevels] = useState([]);
     const [locations, setLocations] = useState([]);
-    const [newDonorRequest, setNewDonorRequest] = useState({
-        title: '',
-        description: '',
-        bloodType: '',
-        units: '',
-        urgency: 'Medium',
-        location: '',
-        hospitalName: '',
-        contactPerson: '',
-        contactNumber: '',
-        deadline: ''
-    });
 
     // Fetch data from API
     useEffect(() => {
@@ -49,8 +37,8 @@ const AdminDashboard = () => {
         fetchBloodTypes();
         fetchUrgencyLevels();
         fetchLocations();
-        fetchBloodRequests();
         fetchDonorRequests();
+        fetchInterHospitalRequests();
         fetchMockData();
     }, []);
 
@@ -179,31 +167,6 @@ const AdminDashboard = () => {
         }
     };
 
-    const fetchBloodRequests = async () => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/blood-requests`);
-            const data = await response.json();
-            if (data.success) {
-                // Transform the data to match the frontend structure
-                const transformedRequests = data.requests.map(request => ({
-                    id: request.id,
-                    title: `Blood Request - ${request.blood_group}`,
-                    hospitalName: request.hospital?.name || 'Unknown Hospital',
-                    location: request.location?.city || request.location?.region || 'Unknown Location',
-                    bloodType: request.blood_group,
-                    units: request.units_needed,
-                    urgency: request.urgencyLevel?.level || 'Medium',
-                    requestDate: request.request_date,
-                    deadline: request.request_date,
-                    status: request.status,
-                    description: `Urgent need for ${request.units_needed} units of ${request.blood_group} blood at ${request.hospital?.name || 'Unknown Hospital'}`
-                }));
-                setBloodRequests(transformedRequests);
-            }
-        } catch (error) {
-            console.error('Error fetching blood requests:', error);
-        }
-    };
 
     const fetchDonorRequests = async () => {
         try {
@@ -242,6 +205,38 @@ const AdminDashboard = () => {
         } catch (error) {
             console.error('Error fetching donor requests:', error);
             console.error('Full error details:', error.message);
+        }
+    };
+
+    const fetchInterHospitalRequests = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/inter-hospital-requests`);
+            const data = await response.json();
+            console.log('Raw API response:', data);
+            if (data.success && data.data) {
+                console.log('Sample request data:', data.data[0]);
+                console.log('From hospital object:', data.data[0]?.from_hospital);
+                console.log('To hospital object:', data.data[0]?.to_hospital);
+
+                // Transform the data to match the frontend structure
+                const transformedRequests = data.data.map(request => ({
+                    id: request.id,
+                    fromHospitalName: request.from_hospital?.name || 'Unknown Hospital',
+                    toHospitalName: request.to_hospital?.name || 'Unknown Hospital',
+                    location: request.location?.city || request.location?.region || 'Unknown Location',
+                    bloodType: request.blood_group,
+                    units: request.units_requested,
+                    status: request.status,
+                    requestDate: request.request_date,
+                    urgency: 'Medium' // Default urgency since it's not in the model
+                }));
+                console.log('Transformed requests:', transformedRequests);
+                setInterHospitalRequests(transformedRequests);
+            } else {
+                console.error('No data received or API returned error:', data);
+            }
+        } catch (error) {
+            console.error('Error fetching inter-hospital requests:', error);
         }
     };
 
@@ -332,14 +327,44 @@ const AdminDashboard = () => {
         ? donorRequests.filter(req => req.location === selectedDonorRequestLocation)
         : donorRequests;
 
-    const handleRequestResponse = (requestId, response) => {
-        setBloodRequests(prev =>
-            prev.map(req =>
-                req.id === requestId
-                    ? { ...req, status: response === 'approve' ? 'approved' : 'rejected' }
-                    : req
-            )
-        );
+    const handleRequestResponse = async (requestId, response) => {
+        try {
+            const apiResponse = await fetch(`${API_BASE_URL}/inter-hospital-requests/${requestId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: response === 'approve' ? 'approved' : 'rejected'
+                })
+            });
+
+            const data = await apiResponse.json();
+
+            if (data.success) {
+                setBloodRequests(prev =>
+                    prev.map(req =>
+                        req.id === requestId
+                            ? { ...req, status: response === 'approve' ? 'approved' : 'rejected' }
+                            : req
+                    )
+                );
+                // Also update the inter-hospital requests state if the tab is active
+                setInterHospitalRequests(prev =>
+                    prev.map(req =>
+                        req.id === requestId
+                            ? { ...req, status: response === 'approve' ? 'approved' : 'rejected' }
+                            : req
+                    )
+                );
+                alert(`Request ${response}d successfully!`);
+            } else {
+                alert(`Failed to ${response} request: ` + (data.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error updating inter-hospital request:', error);
+            alert(`Error updating request. Please try again.`);
+        }
     };
 
     const getUniqueLocations = () => {
@@ -503,110 +528,37 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleDonorRequestInputChange = (e) => {
-        setNewDonorRequest({
-            ...newDonorRequest,
-            [e.target.name]: e.target.value
-        });
-    };
 
-    const handleAddDonorRequest = async () => {
-        if (newDonorRequest.title && newDonorRequest.description && newDonorRequest.bloodType &&
-            newDonorRequest.units && newDonorRequest.location && newDonorRequest.hospitalName &&
-            newDonorRequest.contactPerson && newDonorRequest.contactNumber && newDonorRequest.deadline) {
+    const handleInterHospitalRequestResponse = async (requestId, response) => {
+        try {
+            const apiResponse = await fetch(`${API_BASE_URL}/inter-hospital-requests/${requestId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: response === 'approve' ? 'approved' : 'rejected'
+                })
+            });
 
-            try {
-                // Find hospital ID from hospital name
-                const hospital = hospitals.find(h => h.name === newDonorRequest.hospitalName);
-                if (!hospital) {
-                    alert('Please select a valid hospital.');
-                    return;
-                }
+            const data = await apiResponse.json();
 
-                // Find urgency level ID
-                const urgencyLevel = urgencyLevels.find(level => {
-                    const levelName = typeof level === 'object' ? level.level || level.name || level.urgency : level;
-                    return levelName === newDonorRequest.urgency;
-                });
-                if (!urgencyLevel) {
-                    alert('Please select a valid urgency level.');
-                    return;
-                }
-
-                // Find location ID
-                const location = locations.find(loc => loc.name === newDonorRequest.location);
-                if (!location) {
-                    alert('Please select a valid location.');
-                    return;
-                }
-
-                const response = await fetch(`${API_BASE_URL}/donor-requests`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        title: newDonorRequest.title,
-                        description: newDonorRequest.description,
-                        hospital_id: hospital.id,
-                        blood_group: newDonorRequest.bloodType,
-                        units_needed: parseInt(newDonorRequest.units),
-                        urgency_level_id: urgencyLevel.id,
-                        location_id: location.id,
-                        contact_person: newDonorRequest.contactPerson,
-                        contact_number: newDonorRequest.contactNumber,
-                        deadline: newDonorRequest.deadline
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    // Refresh donor requests list
-                    await fetchDonorRequests();
-
-                    // Reset form
-                    setNewDonorRequest({
-                        title: '',
-                        description: '',
-                        bloodType: '',
-                        units: '',
-                        urgency: 'Medium',
-                        location: '',
-                        hospitalName: '',
-                        contactPerson: '',
-                        contactNumber: '',
-                        deadline: ''
-                    });
-                    setShowDonorRequestDialog(false);
-                    alert('Donor request created successfully!');
-                } else {
-                    alert('Failed to create donor request: ' + (data.message || 'Unknown error'));
-                }
-            } catch (error) {
-                console.error('Error creating donor request:', error);
-                alert('Error creating donor request. Please try again.');
+            if (data.success) {
+                setInterHospitalRequests(prev =>
+                    prev.map(req =>
+                        req.id === requestId
+                            ? { ...req, status: response === 'approve' ? 'approved' : 'rejected' }
+                            : req
+                    )
+                );
+                alert(`Request ${response}d successfully!`);
+            } else {
+                alert(`Failed to ${response} request: ` + (data.message || 'Unknown error'));
             }
-        } else {
-            alert('Please fill in all required fields.');
+        } catch (error) {
+            console.error('Error updating inter-hospital request:', error);
+            alert(`Error updating request. Please try again.`);
         }
-    };
-
-    const handleDeleteDonorRequest = (requestId) => {
-        if (window.confirm('Are you sure you want to delete this donor request?')) {
-            setDonorRequests(prev => prev.filter(req => req.id !== requestId));
-            alert('Donor request deleted successfully!');
-        }
-    };
-
-    const handleToggleDonorRequestStatus = (requestId) => {
-        setDonorRequests(prev =>
-            prev.map(req =>
-                req.id === requestId
-                    ? { ...req, status: req.status === 'active' ? 'inactive' : 'active' }
-                    : req
-            )
-        );
     };
 
     if (loading) {
@@ -648,7 +600,7 @@ const AdminDashboard = () => {
                         <div className="admin-stat-card">
                             <h3 className="admin-stat-title">Pending Requests</h3>
                             <p className="admin-stat-value pending">
-                                {hospitalRequests.filter(req => req.status === 'pending').length}
+                                {interHospitalRequests.filter(req => req.status === 'pending').length}
                             </p>
                             <p className="admin-stat-description">Awaiting response</p>
                         </div>
@@ -665,13 +617,6 @@ const AdminDashboard = () => {
                     <div className="admin-tab-container">
                         <div className="admin-tab-nav">
                             <nav className="flex -mb-px">
-                                <button
-                                    onClick={() => setActiveTab('requests')}
-                                    className={`admin-tab-button ${activeTab === 'requests' ? 'active' : ''
-                                        }`}
-                                >
-                                    Hospital Requests
-                                </button>
                                 <button
                                     onClick={() => setActiveTab('donors')}
                                     className={`admin-tab-button ${activeTab === 'donors' ? 'active' : ''
@@ -700,106 +645,16 @@ const AdminDashboard = () => {
                                 >
                                     Donor Requests
                                 </button>
+                                <button
+                                    onClick={() => setActiveTab('inter-hospital-requests')}
+                                    className={`admin-tab-button ${activeTab === 'inter-hospital-requests' ? 'active' : ''
+                                        }`}
+                                >
+                                    Inter-Hospital Requests
+                                </button>
                             </nav>
                         </div>
 
-                        {/* Hospital Requests Tab */}
-                        {activeTab === 'requests' && (
-                            <div className="admin-tab-content">
-                                {/* Location Filter */}
-                                <div className="admin-filter-section">
-                                    <label className="admin-filter-label">
-                                        Filter by Location
-                                    </label>
-                                    <select
-                                        value={selectedLocation}
-                                        onChange={(e) => setSelectedLocation(e.target.value)}
-                                        className="admin-filter-select"
-                                    >
-                                        <option value="">All Locations</option>
-                                        {getUniqueLocations().map(location => (
-                                            <option key={location} value={location}>{location}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Requests Table */}
-                                <div className="admin-table-container">
-                                    <table className="admin-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Hospital</th>
-                                                <th>Location</th>
-                                                <th>Recipient</th>
-                                                <th>Blood Type</th>
-                                                <th>Units</th>
-                                                <th>Urgency</th>
-                                                <th>Status</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {filteredRequests.map(request => (
-                                                <tr key={request.id}>
-                                                    <td>
-                                                        {request.hospitalName}
-                                                    </td>
-                                                    <td>
-                                                        {request.location}
-                                                    </td>
-                                                    <td>
-                                                        <div>
-                                                            <div>{request.recipientName}</div>
-                                                            <div className="text-gray-500">ID: {request.patientId}</div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="font-medium">
-                                                        {request.bloodType}
-                                                    </td>
-                                                    <td>
-                                                        {request.units}
-                                                    </td>
-                                                    <td>
-                                                        <span className={`admin-urgency-badge admin-urgency-${request.urgency.toLowerCase()}`}>
-                                                            {request.urgency}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <span className={`admin-status-badge admin-status-${request.status}`}>
-                                                            {request.status}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        {request.status === 'pending' && (
-                                                            <div className="admin-action-buttons">
-                                                                <button
-                                                                    onClick={() => handleRequestResponse(request.id, 'approve')}
-                                                                    className="admin-action-button approve"
-                                                                    disabled={bloodInventory[request.bloodType] < request.units}
-                                                                >
-                                                                    Approve
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleRequestResponse(request.id, 'reject')}
-                                                                    className="admin-action-button reject"
-                                                                >
-                                                                    Reject
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                        {request.status !== 'pending' && (
-                                                            <span className="text-gray-400">
-                                                                {request.status}
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        )}
 
                         {/* Donor Statistics Tab */}
                         {activeTab === 'donors' && (
@@ -1150,19 +1005,14 @@ const AdminDashboard = () => {
                         {/* Donor Requests Tab */}
                         {activeTab === 'donor-requests' && (
                             <div className="admin-tab-content">
-                                <div className="flex justify-between items-center mb-6">
+                                <div className="mb-6">
                                     <div>
                                         <h3 className="text-xl font-semibold text-gray-800">Donor Requests Management</h3>
                                         <p className="text-sm text-gray-600 mt-1">
                                             Total Requests Posted: <span className="font-semibold text-blue-600">{donorRequests.length}</span>
+                                            <span className="text-xs text-gray-500 ml-2">(Auto-generated from approved inter-hospital requests)</span>
                                         </p>
                                     </div>
-                                    <button
-                                        onClick={() => setShowDonorRequestDialog(true)}
-                                        className="classic-add-hospital-button"
-                                    >
-                                        Post New Request
-                                    </button>
                                 </div>
 
                                 {/* Location Filter for Donor Requests */}
@@ -1262,222 +1112,103 @@ const AdminDashboard = () => {
                             </div>
                         )}
 
-                        {/* Add Donor Request Dialog */}
-                        {showDonorRequestDialog && (
-                            <div className="classic-hospital-dialog-overlay">
-                                <div className="classic-hospital-dialog">
-                                    <div className="classic-hospital-dialog-header">
-                                        <h3 className="classic-hospital-dialog-title">Post New Donor Request</h3>
-                                        <button
-                                            onClick={() => setShowDonorRequestDialog(false)}
-                                            className="classic-hospital-dialog-close"
-                                        >
-                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </button>
+
+                        {/* Inter-Hospital Requests Tab */}
+                        {activeTab === 'inter-hospital-requests' && (
+                            <div className="admin-tab-content">
+                                <div className="flex justify-between items-center mb-6">
+                                    <div>
+                                        <h3 className="text-xl font-semibold text-gray-800">Inter-Hospital Blood Requests</h3>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            Total Requests: <span className="font-semibold text-blue-600">{interHospitalRequests.length}</span> |
+                                            Pending: <span className="font-semibold text-yellow-600">{interHospitalRequests.filter(req => req.status === 'pending').length}</span>
+                                        </p>
                                     </div>
+                                </div>
 
-                                    <div className="classic-hospital-dialog-body">
-                                        <div className="classic-form-group">
-                                            <label className="classic-form-label required">
-                                                Request Title
-                                            </label>
-                                            <input
-                                                type="text"
-                                                name="title"
-                                                value={newDonorRequest.title}
-                                                onChange={handleDonorRequestInputChange}
-                                                className="classic-form-input"
-                                                placeholder="Enter request title"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="classic-form-group">
-                                            <label className="classic-form-label required">
-                                                Description
-                                            </label>
-                                            <textarea
-                                                name="description"
-                                                value={newDonorRequest.description}
-                                                onChange={handleDonorRequestInputChange}
-                                                className="classic-form-textarea"
-                                                placeholder="Provide detailed description of the blood donation need"
-                                                rows="3"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="classic-form-group">
-                                                <label className="classic-form-label required">
-                                                    Blood Type
-                                                </label>
-                                                <select
-                                                    name="bloodType"
-                                                    value={newDonorRequest.bloodType}
-                                                    onChange={handleDonorRequestInputChange}
-                                                    className="classic-form-input"
-                                                    required
-                                                >
-                                                    <option value="">Select blood type</option>
-                                                    {bloodTypes.map(type => {
-                                                        const value = typeof type === 'object' ? type.group || type.blood_type || type.name : type;
-                                                        const key = type.id || value;
-                                                        return (
-                                                            <option key={key} value={value}>
-                                                                {value}
-                                                            </option>
-                                                        );
-                                                    })}
-                                                </select>
-                                            </div>
-
-                                            <div className="classic-form-group">
-                                                <label className="classic-form-label required">
-                                                    Units Needed
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    name="units"
-                                                    value={newDonorRequest.units}
-                                                    onChange={handleDonorRequestInputChange}
-                                                    className="classic-form-input"
-                                                    placeholder="Number of units"
-                                                    min="1"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="classic-form-group">
-                                                <label className="classic-form-label required">
-                                                    Urgency Level
-                                                </label>
-                                                <select
-                                                    name="urgency"
-                                                    value={newDonorRequest.urgency}
-                                                    onChange={handleDonorRequestInputChange}
-                                                    className="classic-form-input"
-                                                    required
-                                                >
-                                                    {urgencyLevels.map(level => {
-                                                        const value = typeof level === 'object' ? level.level || level.name || level.urgency : level;
-                                                        const key = level.id || value;
-                                                        return (
-                                                            <option key={key} value={value}>
-                                                                {value}
-                                                            </option>
-                                                        );
-                                                    })}
-                                                </select>
-                                            </div>
-
-                                            <div className="classic-form-group">
-                                                <label className="classic-form-label required">
-                                                    Location
-                                                </label>
-                                                <select
-                                                    name="location"
-                                                    value={newDonorRequest.location}
-                                                    onChange={handleDonorRequestInputChange}
-                                                    className="classic-form-input"
-                                                    required
-                                                >
-                                                    <option value="">Select location</option>
-                                                    {getDatabaseLocations().map(location => (
-                                                        <option key={location} value={location}>
-                                                            {location}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div className="classic-form-group">
-                                            <label className="classic-form-label required">
-                                                Hospital Name
-                                            </label>
-                                            <select
-                                                name="hospitalName"
-                                                value={newDonorRequest.hospitalName}
-                                                onChange={handleDonorRequestInputChange}
-                                                className="classic-form-input"
-                                                required
-                                            >
-                                                <option value="">Select hospital</option>
-                                                {hospitals.map(hospital => (
-                                                    <option key={hospital.id} value={hospital.name}>
-                                                        {hospital.name}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="classic-form-group">
-                                                <label className="classic-form-label required">
-                                                    Contact Person
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    name="contactPerson"
-                                                    value={newDonorRequest.contactPerson}
-                                                    onChange={handleDonorRequestInputChange}
-                                                    className="classic-form-input"
-                                                    placeholder="Contact person name"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div className="classic-form-group">
-                                                <label className="classic-form-label required">
-                                                    Contact Number
-                                                </label>
-                                                <input
-                                                    type="tel"
-                                                    name="contactNumber"
-                                                    value={newDonorRequest.contactNumber}
-                                                    onChange={handleDonorRequestInputChange}
-                                                    className="classic-form-input"
-                                                    placeholder="Contact phone number"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="classic-form-group">
-                                            <label className="classic-form-label required">
-                                                Deadline
-                                            </label>
-                                            <input
-                                                type="date"
-                                                name="deadline"
-                                                value={newDonorRequest.deadline}
-                                                onChange={handleDonorRequestInputChange}
-                                                className="classic-form-input"
-                                                min={new Date().toISOString().split('T')[0]}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="classic-hospital-dialog-footer">
-                                        <button
-                                            onClick={() => setShowDonorRequestDialog(false)}
-                                            className="classic-button classic-button-secondary"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            onClick={handleAddDonorRequest}
-                                            className="classic-button classic-button-primary"
-                                        >
-                                            Post Request
-                                        </button>
-                                    </div>
+                                {/* Inter-Hospital Requests Table */}
+                                <div className="admin-table-container">
+                                    <table className="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>From Hospital</th>
+                                                <th>To Hospital</th>
+                                                <th>Location</th>
+                                                <th>Blood Type</th>
+                                                <th>Units</th>
+                                                <th>Request Date</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {interHospitalRequests.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="8" className="text-center py-8 text-gray-500">
+                                                        No inter-hospital requests found.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                interHospitalRequests.map(request => {
+                                                    console.log('Rendering request:', request);
+                                                    console.log('fromHospitalName:', request.fromHospitalName);
+                                                    console.log('toHospitalName:', request.toHospitalName);
+                                                    return (
+                                                        <tr key={request.id}>
+                                                            <td className="font-medium">
+                                                                {request.fromHospitalName || 'DEBUG: No fromHospitalName'}
+                                                            </td>
+                                                            <td className="font-medium">
+                                                                {request.toHospitalName || 'DEBUG: No toHospitalName'}
+                                                            </td>
+                                                            <td>
+                                                                {request.location}
+                                                            </td>
+                                                            <td className="font-medium">
+                                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                                    {request.bloodType}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                {request.units}
+                                                            </td>
+                                                            <td>
+                                                                {request.requestDate}
+                                                            </td>
+                                                            <td>
+                                                                <span className={`admin-status-badge admin-status-${request.status}`}>
+                                                                    {request.status}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                {request.status === 'pending' && (
+                                                                    <div className="admin-action-buttons">
+                                                                        <button
+                                                                            onClick={() => handleInterHospitalRequestResponse(request.id, 'approve')}
+                                                                            className="admin-action-button approve"
+                                                                        >
+                                                                            Approve
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleInterHospitalRequestResponse(request.id, 'reject')}
+                                                                            className="admin-action-button reject"
+                                                                        >
+                                                                            Reject
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                                {request.status !== 'pending' && (
+                                                                    <span className="text-gray-400">
+                                                                        {request.status}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            )}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         )}
