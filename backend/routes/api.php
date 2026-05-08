@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InterHospitalRequestController;
+use App\Http\Controllers\BloodRequestController;
 use App\Http\Controllers\auth\LoginController;
 
 Route::get('/test', function() {
@@ -30,4 +31,10 @@ Route::post('/register', function() {
 
 Route::post('/login', [LoginController::class, 'login']);
 
+Route::get('/inter-hospital-requests', [InterHospitalRequestController::class, 'index']);
 Route::post('/inter-hospital-requests', [InterHospitalRequestController::class, 'store']);
+Route::put('/inter-hospital-requests/{id}/status', [InterHospitalRequestController::class, 'updateStatus']);
+Route::get('/inter-hospital-requests/hospital/{hospitalId}', [InterHospitalRequestController::class, 'getHospitalRequests']);
+Route::get('/inter-hospital-requests/pending', [InterHospitalRequestController::class, 'getPendingRequests']);
+
+Route::get('/donor-requests', [BloodRequestController::class, 'getDonorRequests']);
