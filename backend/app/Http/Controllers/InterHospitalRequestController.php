@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\InterHospitalRequest;
 use App\Models\Hospital;
 use App\Models\Location;
+use App\Models\BloodRequest;
+use App\Models\UrgencyLevel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -105,12 +107,66 @@ class InterHospitalRequestController extends Controller
      */
     public function updateStatus(Request $request, $id)
     {
+        // Check if user is authenticated
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Please login to perform this action.'
+            ], 401);
+        }
+
         $validated = $request->validate([
             'status' => 'required|in:pending,approved,rejected,fulfilled'
         ]);
 
-        $interHospitalRequest = InterHospitalRequest::findOrFail($id);
+        $interHospitalRequest = InterHospitalRequest::with(['toHospital'])->findOrFail($id);
+        $oldStatus = $interHospitalRequest->status;
         $interHospitalRequest->update(['status' => $validated['status']]);
+
+        // If the request is approved, create a blood request for donors to see
+        if ($validated['status'] === 'approved' && $oldStatus !== 'approved') {
+            try {
+                // Get the default urgency level (you might want to make this configurable)
+                $urgencyLevel = UrgencyLevel::where('level', 'medium')->first();
+                if (!$urgencyLevel) {
+                    $urgencyLevel = UrgencyLevel::first();
+                }
+
+                // Create a blood request that donors can see
+                BloodRequest::create([
+                    'hospital_id' => $interHospitalRequest->to_hospital_id,
+                    'blood_group' => $interHospitalRequest->blood_group,
+                    'units_needed' => $interHospitalRequest->units_requested,
+                    'urgency_level_id' => $urgencyLevel->id ?? 1,
+                    'status' => 'approved',
+                    'request_date' => $interHospitalRequest->request_date,
+                    'location_id' => $interHospitalRequest->location_id,
+                    'created_by' => Auth::id(),
+                    'title' => "Blood Request - {$interHospitalRequest->blood_group}",
+                    'description' => "Urgent blood request for {$interHospitalRequest->units_requested} units of {$interHospitalRequest->blood_group} blood for inter-hospital transfer.",
+                    'contact_person' => 'Hospital Administrator',
+                    'contact_number' => $interHospitalRequest->toHospital->phone ?? 'N/A',
+                    'deadline' => now()->addDays(7)->format('Y-m-d')
+                ]);
+
+                Log::info('Blood request created for approved inter-hospital request', [
+                    'inter_hospital_request_id' => $interHospitalRequest->id,
+                    'blood_group' => $interHospitalRequest->blood_group,
+                    'units' => $interHospitalRequest->units_requested
+                ]);
+
+            } catch (\Exception $e) {
+                Log::error('Failed to create blood request for approved inter-hospital request: ' . $e->getMessage());
+                Log::error('Exception details: ', [
+                    'inter_hospital_request_id' => $interHospitalRequest->id,
+                    'to_hospital_id' => $interHospitalRequest->to_hospital_id,
+                    'urgency_level_id' => $urgencyLevel->id ?? null,
+                    'auth_id' => Auth::id(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                // Continue with the response even if blood request creation fails
+            }
+        }
 
         return response()->json([
             'success' => true,
