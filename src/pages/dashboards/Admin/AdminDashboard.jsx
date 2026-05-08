@@ -327,45 +327,6 @@ const AdminDashboard = () => {
         ? donorRequests.filter(req => req.location === selectedDonorRequestLocation)
         : donorRequests;
 
-    const handleRequestResponse = async (requestId, response) => {
-        try {
-            const apiResponse = await fetch(`${API_BASE_URL}/inter-hospital-requests/${requestId}/status`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    status: response === 'approve' ? 'approved' : 'rejected'
-                })
-            });
-
-            const data = await apiResponse.json();
-
-            if (data.success) {
-                setBloodRequests(prev =>
-                    prev.map(req =>
-                        req.id === requestId
-                            ? { ...req, status: response === 'approve' ? 'approved' : 'rejected' }
-                            : req
-                    )
-                );
-                // Also update the inter-hospital requests state if the tab is active
-                setInterHospitalRequests(prev =>
-                    prev.map(req =>
-                        req.id === requestId
-                            ? { ...req, status: response === 'approve' ? 'approved' : 'rejected' }
-                            : req
-                    )
-                );
-                alert(`Request ${response}d successfully!`);
-            } else {
-                alert(`Failed to ${response} request: ` + (data.message || 'Unknown error'));
-            }
-        } catch (error) {
-            console.error('Error updating inter-hospital request:', error);
-            alert(`Error updating request. Please try again.`);
-        }
-    };
 
     const getUniqueLocations = () => {
         return [...new Set(bloodRequests.map(req => req.location))];
@@ -528,14 +489,20 @@ const AdminDashboard = () => {
         }
     };
 
-
     const handleInterHospitalRequestResponse = async (requestId, response) => {
         try {
+            // Check authentication status
+            const token = localStorage.getItem('authToken');
+            console.log('Token in localStorage:', token);
+            console.log('User authenticated:', !!token);
+
+            // Use proper headers (backend auth is temporarily disabled for testing)
+            const headers = getAuthHeaders();
+            console.log('Auth headers:', headers);
+
             const apiResponse = await fetch(`${API_BASE_URL}/inter-hospital-requests/${requestId}/status`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: headers,
                 body: JSON.stringify({
                     status: response === 'approve' ? 'approved' : 'rejected'
                 })
@@ -551,7 +518,14 @@ const AdminDashboard = () => {
                             : req
                     )
                 );
-                alert(`Request ${response}d successfully!`);
+
+                // If approved, refresh donor requests to show the new blood request created for donors
+                if (response === 'approve') {
+                    console.log('Request approved, refreshing donor requests...');
+                    fetchDonorRequests(); // This will refresh the donor requests tab
+                }
+
+                alert(`Request ${response}d successfully!${response === 'approve' ? ' Blood request created for donors to view.' : ''}`);
             } else {
                 alert(`Failed to ${response} request: ` + (data.message || 'Unknown error'));
             }

@@ -51,9 +51,9 @@ const ResipientDashboard = () => {
         const fetchData = async () => {
             try {
                 const [hospitalsResponse, bloodTypesResponse, urgencyLevelsResponse] = await Promise.all([
-                    fetch('/api/hospitals'),
-                    fetch('/api/blood-groups'),
-                    fetch('/api/urgency-levels')
+                    fetch('http://localhost:8000/api/hospitals'),
+                    fetch('http://localhost:8000/api/blood-groups'),
+                    fetch('http://localhost:8000/api/urgency-levels')
                 ]);
 
                 const hospitalsData = await hospitalsResponse.json();
