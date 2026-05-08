@@ -600,7 +600,7 @@ const AdminDashboard = () => {
                         <div className="admin-stat-card">
                             <h3 className="admin-stat-title">Pending Requests</h3>
                             <p className="admin-stat-value pending">
-                                {hospitalRequests.filter(req => req.status === 'pending').length}
+                                {interHospitalRequests.filter(req => req.status === 'pending').length}
                             </p>
                             <p className="admin-stat-description">Awaiting response</p>
                         </div>
