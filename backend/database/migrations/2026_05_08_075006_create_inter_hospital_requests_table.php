@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('from_hospital_id')->constrained('hospitals')->onDelete('cascade');
             $table->foreignId('to_hospital_id')->constrained('hospitals')->onDelete('cascade');
+            $table->foreignId('location_id')->constrained('locations')->onDelete('cascade');
             $table->enum('blood_group', ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']);
             $table->integer('units_requested');
             $table->enum('status', ['pending', 'approved', 'rejected', 'fulfilled'])->default('pending');

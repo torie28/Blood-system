@@ -1,0 +1,15 @@
+{
+    "from_hospital_id": "1",
+    "to_hospital_id": "2",
+    "location_id": "1",
+    "blood_group": "A+",
+    "units_requested": "1",
+    "request_date": "2026-05-08",
+    "contact_person": "Test",
+    "phone_number": "123",
+    "email": "test@test.com",
+    "patient_name": "John",
+    "patient_age": "30",
+    "patient_gender": "Male",
+    "reason": "Test"
+}
