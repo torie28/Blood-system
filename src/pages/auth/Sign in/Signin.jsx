@@ -70,6 +70,10 @@ const Signin = () => {
                 }
 
                 // Extract user data from API response
+                if (!data.user) {
+                    throw new Error('Invalid response from server: missing user data');
+                }
+
                 const userData = {
                     id: data.user.id,
                     name: data.user.name,

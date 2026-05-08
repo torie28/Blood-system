@@ -31,18 +31,20 @@ const ResipientDashboard = () => {
     ]);
 
     const [formData, setFormData] = useState({
-        hospitalName: '',
-        bloodType: '',
-        units: '',
-        urgency: 'Medium',
-        contactPerson: '',
-        phoneNumber: '',
+        from_hospital_id: '',
+        to_hospital_id: '',
+        location_id: '',
+        blood_group: '',
+        units_requested: '',
+        request_date: new Date().toISOString().split('T')[0],
+        contact_person: '',
+        phone_number: '',
         email: '',
+        patient_name: '',
+        patient_age: '',
+        patient_gender: '',
         reason: '',
-        patientName: '',
-        patientAge: '',
-        patientGender: '',
-        medicalHistory: ''
+        medical_history: ''
     });
 
     useEffect(() => {
@@ -81,39 +83,75 @@ const ResipientDashboard = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+
+        setFormData(prev => {
+            const updated = {
+                ...prev,
+                [name]: value
+            };
+
+            // If to_hospital_id is changed, automatically set the location_id
+            if (name === 'to_hospital_id') {
+                const selectedHospital = hospitals.find(h => h.id == value);
+                if (selectedHospital && selectedHospital.location_id) {
+                    updated.location_id = selectedHospital.location_id;
+                }
+            }
+
+            return updated;
+        });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const newRequest = {
-            id: requests.length + 1,
-            ...formData,
-            status: 'Pending',
-            date: new Date().toISOString().split('T')[0]
-        };
-        setRequests(prev => [newRequest, ...prev]);
 
-        // Reset form
-        setFormData({
-            hospitalName: '',
-            bloodType: '',
-            units: '',
-            urgency: 'Medium',
-            contactPerson: '',
-            phoneNumber: '',
-            email: '',
-            reason: '',
-            patientName: '',
-            patientAge: '',
-            patientGender: '',
-            medicalHistory: ''
-        });
+        console.log('Submitting form data:', formData);
 
-        alert('Blood request submitted successfully!');
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://127.0.0.1:8000/api/inter-hospital-requests', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                    // 'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(formData)
+            });
+
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+
+            const data = await response.json();
+            console.log('Response data:', data);
+
+            if (data.success) {
+                alert('Inter-hospital blood request submitted successfully!');
+
+                // Reset form
+                setFormData({
+                    from_hospital_id: '',
+                    to_hospital_id: '',
+                    location_id: '',
+                    blood_group: '',
+                    units_requested: '',
+                    request_date: new Date().toISOString().split('T')[0],
+                    contact_person: '',
+                    phone_number: '',
+                    email: '',
+                    patient_name: '',
+                    patient_age: '',
+                    patient_gender: '',
+                    reason: '',
+                    medical_history: ''
+                });
+            } else {
+                console.error('Server error:', data);
+                alert('Error submitting request: ' + (data.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error submitting request:', error);
+            alert('Error submitting request. Please try again.');
+        }
     };
 
     return (
@@ -159,42 +197,67 @@ const ResipientDashboard = () => {
                     {activeTab === 'new-request' && (
                         <div className="recipient-card recipient-fade-in">
                             <h2 className="recipient-card-header">
-                                Request Blood from Hospital
+                                Request Blood Transfer Between Hospitals
                             </h2>
 
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="recipient-form-grid">
-                                    {/* Hospital Selection */}
+                                    {/* From Hospital Selection */}
                                     <div className="recipient-form-group">
                                         <label className="recipient-form-label required">
-                                            Select Hospital
+                                            From Hospital (Requesting Hospital)
                                         </label>
                                         <select
-                                            name="hospitalName"
-                                            value={formData.hospitalName}
+                                            name="from_hospital_id"
+                                            value={formData.from_hospital_id}
                                             onChange={handleInputChange}
                                             required
                                             className="recipient-form-select"
                                             disabled={loading}
                                         >
                                             <option value="">
-                                                {loading ? 'Loading hospitals...' : 'Choose a hospital...'}
+                                                {loading ? 'Loading hospitals...' : 'Select requesting hospital...'}
                                             </option>
                                             {hospitals.map(hospital => (
-                                                <option key={hospital.id} value={hospital.name}>
+                                                <option key={hospital.id} value={hospital.id}>
                                                     {hospital.name}
                                                 </option>
                                             ))}
                                         </select>
                                     </div>
+
+                                    {/* To Hospital Selection */}
+                                    <div className="recipient-form-group">
+                                        <label className="recipient-form-label required">
+                                            To Hospital (Donor Hospital)
+                                        </label>
+                                        <select
+                                            name="to_hospital_id"
+                                            value={formData.to_hospital_id}
+                                            onChange={handleInputChange}
+                                            required
+                                            className="recipient-form-select"
+                                            disabled={loading}
+                                        >
+                                            <option value="">
+                                                {loading ? 'Loading hospitals...' : 'Select donor hospital...'}
+                                            </option>
+                                            {hospitals.filter(h => h.id != formData.from_hospital_id).map(hospital => (
+                                                <option key={hospital.id} value={hospital.id}>
+                                                    {hospital.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
                                     {/* Blood Type */}
                                     <div className="recipient-form-group">
                                         <label className="recipient-form-label required">
                                             Blood Type Required
                                         </label>
                                         <select
-                                            name="bloodType"
-                                            value={formData.bloodType}
+                                            name="blood_group"
+                                            value={formData.blood_group}
                                             onChange={handleInputChange}
                                             required
                                             className="recipient-form-select"
@@ -213,39 +276,29 @@ const ResipientDashboard = () => {
                                         </label>
                                         <input
                                             type="number"
-                                            name="units"
-                                            value={formData.units}
+                                            name="units_requested"
+                                            value={formData.units_requested}
                                             onChange={handleInputChange}
                                             min="1"
-                                            max="10"
+                                            max="50"
                                             required
                                             className="recipient-form-input"
                                         />
                                     </div>
 
-                                    {/* Urgency Level */}
+                                    {/* Request Date */}
                                     <div className="recipient-form-group">
                                         <label className="recipient-form-label required">
-                                            Urgency Level
+                                            Request Date
                                         </label>
-                                        <select
-                                            name="urgency"
-                                            value={formData.urgency}
+                                        <input
+                                            type="date"
+                                            name="request_date"
+                                            value={formData.request_date}
                                             onChange={handleInputChange}
                                             required
-                                            className="recipient-form-select"
-                                            disabled={loading}
-                                        >
-                                            <option value="">
-                                                {loading ? 'Loading urgency levels...' : 'Select urgency level...'}
-                                            </option>
-                                            {urgencyLevels.map(level => (
-                                                <option key={level.id} value={level.level.charAt(0).toUpperCase() + level.level.slice(1)}>
-                                                    {level.level.charAt(0).toUpperCase() + level.level.slice(1)}
-                                                    {level.level === 'high' ? ' - Emergency' : ''}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            className="recipient-form-input"
+                                        />
                                     </div>
 
                                     {/* Contact Person */}
@@ -255,8 +308,8 @@ const ResipientDashboard = () => {
                                         </label>
                                         <input
                                             type="text"
-                                            name="contactPerson"
-                                            value={formData.contactPerson}
+                                            name="contact_person"
+                                            value={formData.contact_person}
                                             onChange={handleInputChange}
                                             required
                                             className="recipient-form-input"
@@ -270,8 +323,8 @@ const ResipientDashboard = () => {
                                         </label>
                                         <input
                                             type="tel"
-                                            name="phoneNumber"
-                                            value={formData.phoneNumber}
+                                            name="phone_number"
+                                            value={formData.phone_number}
                                             onChange={handleInputChange}
                                             required
                                             className="recipient-form-input"
@@ -300,8 +353,8 @@ const ResipientDashboard = () => {
                                         </label>
                                         <input
                                             type="text"
-                                            name="patientName"
-                                            value={formData.patientName}
+                                            name="patient_name"
+                                            value={formData.patient_name}
                                             onChange={handleInputChange}
                                             required
                                             className="recipient-form-input"
@@ -315,8 +368,8 @@ const ResipientDashboard = () => {
                                         </label>
                                         <input
                                             type="number"
-                                            name="patientAge"
-                                            value={formData.patientAge}
+                                            name="patient_age"
+                                            value={formData.patient_age}
                                             onChange={handleInputChange}
                                             min="0"
                                             max="120"
@@ -331,8 +384,8 @@ const ResipientDashboard = () => {
                                             Patient Gender
                                         </label>
                                         <select
-                                            name="patientGender"
-                                            value={formData.patientGender}
+                                            name="patient_gender"
+                                            value={formData.patient_gender}
                                             onChange={handleInputChange}
                                             required
                                             className="recipient-form-select"
@@ -367,8 +420,8 @@ const ResipientDashboard = () => {
                                         Medical History (Optional)
                                     </label>
                                     <textarea
-                                        name="medicalHistory"
-                                        value={formData.medicalHistory}
+                                        name="medical_history"
+                                        value={formData.medical_history}
                                         onChange={handleInputChange}
                                         rows="3"
                                         className="recipient-form-textarea"
@@ -382,7 +435,7 @@ const ResipientDashboard = () => {
                                         type="submit"
                                         className="recipient-submit-button"
                                     >
-                                        Submit Blood Request
+                                        Submit Inter-Hospital Blood Request
                                     </button>
                                 </div>
                             </form>
