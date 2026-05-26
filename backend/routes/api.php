@@ -7,6 +7,7 @@ use App\Http\Controllers\HospitalController;
 use App\Http\Controllers\BloodGroupController;
 use App\Http\Controllers\UrgencyLevelController;
 use App\Http\Controllers\auth\LoginController;
+use App\Http\Controllers\BloodBankController;
 
 Route::get('/test', function() {
     return ['message' => 'API is working'];
@@ -37,3 +38,6 @@ Route::get('/inter-hospital-requests/hospital/{hospitalId}', [InterHospitalReque
 Route::get('/inter-hospital-requests/pending', [InterHospitalRequestController::class, 'getPendingRequests']);
 
 Route::get('/donor-requests', [BloodRequestController::class, 'getDonorRequests']);
+
+Route::get('/blood-inventory', [BloodBankController::class, 'index']);
+Route::put('/blood-inventory/{hospitalId}', [BloodBankController::class, 'update']);
