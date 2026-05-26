@@ -930,11 +930,16 @@ const ResipientDashboard = () => {
               {/* Content */}
               {!inventoryLoading &&
                 (() => {
+                  // Exclude the currently logged-in hospital from the inventory list
+                  const visibleInventory = myHospitalId
+                    ? inventoryData.filter((h) => h.id !== myHospitalId)
+                    : inventoryData;
+
                   const filtered = inventoryFilter
-                    ? inventoryData.filter(
+                    ? visibleInventory.filter(
                         (h) => (h.inventory[inventoryFilter] ?? 0) > 0,
                       )
-                    : inventoryData;
+                    : visibleInventory;
 
                   if (inventoryData.length === 0) {
                     return (
@@ -1059,7 +1064,7 @@ const ResipientDashboard = () => {
                     </>
                   ) : (
                     <div className="recipient-inventory-grid">
-                      {inventoryData.map((hospital) => (
+                      {visibleInventory.map((hospital) => (
                         <div
                           key={hospital.id}
                           className="recipient-inventory-card"
