@@ -1339,6 +1339,357 @@
     border-bottom: 1px solid #dee2e6;
 }
 
+/* ── Blood Inventory Section ─────────────────────────────────────────────── */
+
+.recipient-inventory-subtitle {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+/* Filter bar */
+.recipient-inventory-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.recipient-inventory-filter-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.recipient-inventory-filter-select {
+    padding: 0.5rem 0.75rem;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.recipient-inventory-filter-select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.recipient-inventory-clear-btn {
+    padding: 0.5rem 0.875rem;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.recipient-inventory-clear-btn:hover {
+    background-color: #5a6268;
+}
+
+.recipient-inventory-refresh-btn {
+    padding: 0.5rem 0.875rem;
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-left: auto;
+}
+
+.recipient-inventory-refresh-btn:hover:not(:disabled) {
+    background-color: #138496;
+}
+
+.recipient-inventory-refresh-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Loading state */
+.recipient-inventory-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+    justify-content: center;
+}
+
+.recipient-inventory-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #dee2e6;
+    border-top-color: #007bff;
+    border-radius: 50%;
+    animation: inventorySpin 0.75s linear infinite;
+}
+
+@keyframes inventorySpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Summary text (filtered view) */
+.recipient-inventory-summary {
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.recipient-inventory-highlight {
+    font-weight: 700;
+    color: #dc3545;
+    font-size: 1rem;
+}
+
+/* No-results state */
+.recipient-inventory-no-results {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.recipient-inventory-no-results-icon {
+    display: block;
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.recipient-inventory-no-results p {
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+/* Table enhancements for inventory */
+.recipient-inventory-hospital-name {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.recipient-inventory-location {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+/* Stock badges (units count) */
+.recipient-inventory-badge {
+    display: inline-block;
+    padding: 0.3rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.recipient-inventory-badge-high {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.recipient-inventory-badge-medium {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.recipient-inventory-badge-low {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Stock level indicator */
+.recipient-stock-level {
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.recipient-stock-level-high {
+    color: #28a745;
+}
+.recipient-stock-level-medium {
+    color: #856404;
+}
+.recipient-stock-level-low {
+    color: #dc3545;
+}
+
+/* Request button (table row) */
+.recipient-request-btn {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.45rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.25);
+}
+
+.recipient-request-btn:hover {
+    background: linear-gradient(135deg, #c82333, #bd2130);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.35);
+}
+
+/* ── All-types card grid ──────────────────────────────────────────────────── */
+
+.recipient-inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+}
+
+.recipient-inventory-card {
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.2s ease;
+}
+
+.recipient-inventory-card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.recipient-inventory-card-header {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.recipient-inventory-card-name {
+    color: white;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.recipient-inventory-card-location {
+    color: #adb5bd;
+    font-size: 0.78rem;
+}
+
+.recipient-inventory-card-body {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid #dee2e6;
+}
+
+.recipient-inventory-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.6rem 0.4rem;
+    border-right: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 0.3rem;
+}
+
+.recipient-inventory-cell:nth-child(4n) {
+    border-right: none;
+}
+
+.recipient-inventory-cell-type {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #dc3545;
+}
+
+.recipient-inventory-cell-units {
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.recipient-inventory-cell-high {
+    color: #28a745;
+}
+.recipient-inventory-cell-medium {
+    color: #856404;
+}
+.recipient-inventory-cell-low {
+    color: #dc3545;
+}
+.recipient-inventory-cell-empty {
+    color: #ced4da;
+}
+
+/* Mini request button inside grid cells */
+.recipient-inventory-mini-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.recipient-inventory-mini-btn:hover {
+    background-color: #c82333;
+}
+
+.recipient-inventory-card-footer {
+    padding: 0.6rem 1rem;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-align: right;
+}
+
+@media (max-width: 480px) {
+    .recipient-inventory-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .recipient-inventory-card-body {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .recipient-inventory-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .recipient-inventory-refresh-btn {
+        margin-left: 0;
+    }
+}
+
+/* ── End Blood Inventory Section ────────────────────────────────────────── */
+
 @media (max-width: 768px) {
     .classic-main-grid {
         grid-template-columns: 1fr;

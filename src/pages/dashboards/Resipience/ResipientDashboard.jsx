@@ -7,6 +7,9 @@ const ResipientDashboard = () => {
   const [bloodTypes, setBloodTypes] = useState([]);
   const [_urgencyLevels, setUrgencyLevels] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [inventoryData, setInventoryData] = useState([]);
+  const [inventoryFilter, setInventoryFilter] = useState("");
+  const [inventoryLoading, setInventoryLoading] = useState(false);
   const [requests, _setRequests] = useState([
     {
       id: 1,
@@ -46,6 +49,29 @@ const ResipientDashboard = () => {
     reason: "",
     medical_history: "",
   });
+
+  const BLOOD_TYPES = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
+
+  const fetchInventory = async () => {
+    setInventoryLoading(true);
+    try {
+      const response = await fetch("http://localhost:8000/api/blood-inventory");
+      const data = await response.json();
+      if (data.success) {
+        setInventoryData(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching inventory:", error);
+    } finally {
+      setInventoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "blood-inventory" && inventoryData.length === 0) {
+      fetchInventory();
+    }
+  }, [activeTab, inventoryData.length]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -101,6 +127,20 @@ const ResipientDashboard = () => {
 
       return updated;
     });
+  };
+
+  const handleRequestFromInventory = (hospitalId, bloodType) => {
+    const hospital = hospitals.find((h) => String(h.id) === String(hospitalId));
+    setFormData((prev) => ({
+      ...prev,
+      to_hospital_id: String(hospitalId),
+      blood_group: bloodType,
+      location_id: hospital?.location_id
+        ? String(hospital.location_id)
+        : prev.location_id,
+    }));
+    setActiveTab("new-request");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSubmit = async (e) => {
@@ -197,6 +237,14 @@ const ResipientDashboard = () => {
                   }`}
                 >
                   My Requests ({requests.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab("blood-inventory")}
+                  className={`recipient-tab-button ${
+                    activeTab === "blood-inventory" ? "active" : ""
+                  }`}
+                >
+                  🩸 Blood Inventory
                 </button>
               </nav>
             </div>
@@ -515,6 +563,260 @@ const ResipientDashboard = () => {
                   </table>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Blood Inventory Tab */}
+          {activeTab === "blood-inventory" && (
+            <div className="recipient-card recipient-fade-in">
+              <h2 className="recipient-card-header">
+                🩸 Blood Inventory by Hospital
+              </h2>
+              <p className="recipient-inventory-subtitle">
+                Browse available blood stock across all hospitals. Select a
+                blood type to find hospitals that can fulfil your request, then
+                click <strong>Request</strong> to pre-fill the request form.
+              </p>
+
+              {/* Filter bar */}
+              <div className="recipient-inventory-filter-bar">
+                <label className="recipient-inventory-filter-label">
+                  Filter by Blood Type:
+                </label>
+                <select
+                  value={inventoryFilter}
+                  onChange={(e) => setInventoryFilter(e.target.value)}
+                  className="recipient-inventory-filter-select"
+                >
+                  <option value="">All Blood Types</option>
+                  {BLOOD_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+                {inventoryFilter && (
+                  <button
+                    onClick={() => setInventoryFilter("")}
+                    className="recipient-inventory-clear-btn"
+                  >
+                    × Clear
+                  </button>
+                )}
+                <button
+                  onClick={fetchInventory}
+                  className="recipient-inventory-refresh-btn"
+                  disabled={inventoryLoading}
+                >
+                  {inventoryLoading ? "↻ Refreshing…" : "↻ Refresh"}
+                </button>
+              </div>
+
+              {/* Loading state */}
+              {inventoryLoading && (
+                <div className="recipient-inventory-loading">
+                  <span className="recipient-inventory-spinner" />
+                  Loading inventory…
+                </div>
+              )}
+
+              {/* Inventory content */}
+              {!inventoryLoading &&
+                (() => {
+                  const filtered = inventoryFilter
+                    ? inventoryData.filter(
+                        (h) => (h.inventory[inventoryFilter] ?? 0) > 0,
+                      )
+                    : inventoryData;
+
+                  if (inventoryData.length === 0) {
+                    return (
+                      <div className="recipient-empty-state">
+                        <p>No inventory data available. Try refreshing.</p>
+                        <button
+                          onClick={fetchInventory}
+                          className="recipient-create-request-link"
+                        >
+                          Refresh Inventory
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="recipient-inventory-no-results">
+                        <span className="recipient-inventory-no-results-icon">
+                          🚫
+                        </span>
+                        <p>
+                          No hospitals currently have{" "}
+                          <strong>{inventoryFilter}</strong> blood in stock.
+                        </p>
+                        <button
+                          onClick={() => setInventoryFilter("")}
+                          className="recipient-create-request-link"
+                        >
+                          Show All Hospitals
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return inventoryFilter ? (
+                    /* Filtered view — clean focused table */
+                    <>
+                      <p className="recipient-inventory-summary">
+                        <strong>{filtered.length}</strong> hospital
+                        {filtered.length !== 1 ? "s have" : " has"}{" "}
+                        <span className="recipient-inventory-highlight">
+                          {inventoryFilter}
+                        </span>{" "}
+                        blood available.
+                      </p>
+                      <div className="recipient-table-container">
+                        <table className="recipient-table">
+                          <thead>
+                            <tr>
+                              <th>Hospital</th>
+                              <th>Location</th>
+                              <th>Blood Type</th>
+                              <th>Units Available</th>
+                              <th>Stock Level</th>
+                              <th>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filtered
+                              .sort(
+                                (a, b) =>
+                                  (b.inventory[inventoryFilter] ?? 0) -
+                                  (a.inventory[inventoryFilter] ?? 0),
+                              )
+                              .map((hospital) => {
+                                const units =
+                                  hospital.inventory[inventoryFilter] ?? 0;
+                                const level =
+                                  units >= 20
+                                    ? "high"
+                                    : units >= 5
+                                      ? "medium"
+                                      : "low";
+                                return (
+                                  <tr key={hospital.id}>
+                                    <td className="recipient-inventory-hospital-name">
+                                      {hospital.name}
+                                    </td>
+                                    <td className="recipient-inventory-location">
+                                      📍 {hospital.location}
+                                    </td>
+                                    <td className="recipient-blood-type">
+                                      {inventoryFilter}
+                                    </td>
+                                    <td>
+                                      <span
+                                        className={`recipient-inventory-badge recipient-inventory-badge-${level}`}
+                                      >
+                                        {units} units
+                                      </span>
+                                    </td>
+                                    <td>
+                                      <span
+                                        className={`recipient-stock-level recipient-stock-level-${level}`}
+                                      >
+                                        {level === "high"
+                                          ? "✅ High"
+                                          : level === "medium"
+                                            ? "⚠️ Medium"
+                                            : "🔴 Low"}
+                                      </span>
+                                    </td>
+                                    <td>
+                                      <button
+                                        onClick={() =>
+                                          handleRequestFromInventory(
+                                            hospital.id,
+                                            inventoryFilter,
+                                          )
+                                        }
+                                        className="recipient-request-btn"
+                                      >
+                                        Request Blood
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  ) : (
+                    /* All-types view — compact grid cards */
+                    <div className="recipient-inventory-grid">
+                      {inventoryData.map((hospital) => (
+                        <div
+                          key={hospital.id}
+                          className="recipient-inventory-card"
+                        >
+                          <div className="recipient-inventory-card-header">
+                            <span className="recipient-inventory-card-name">
+                              {hospital.name}
+                            </span>
+                            <span className="recipient-inventory-card-location">
+                              📍 {hospital.location}
+                            </span>
+                          </div>
+                          <div className="recipient-inventory-card-body">
+                            {BLOOD_TYPES.map((type) => {
+                              const units = hospital.inventory[type] ?? 0;
+                              const level =
+                                units >= 20
+                                  ? "high"
+                                  : units >= 5
+                                    ? "medium"
+                                    : units > 0
+                                      ? "low"
+                                      : "empty";
+                              return (
+                                <div
+                                  key={type}
+                                  className="recipient-inventory-cell"
+                                >
+                                  <span className="recipient-inventory-cell-type">
+                                    {type}
+                                  </span>
+                                  <span
+                                    className={`recipient-inventory-cell-units recipient-inventory-cell-${level}`}
+                                  >
+                                    {units}
+                                  </span>
+                                  {units > 0 && (
+                                    <button
+                                      onClick={() =>
+                                        handleRequestFromInventory(
+                                          hospital.id,
+                                          type,
+                                        )
+                                      }
+                                      className="recipient-inventory-mini-btn"
+                                      title={`Request ${type} from ${hospital.name}`}
+                                    >
+                                      Request
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="recipient-inventory-card-footer">
+                            Total: <strong>{hospital.total ?? 0} units</strong>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
             </div>
           )}
         </div>
