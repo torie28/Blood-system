@@ -1224,6 +1224,29 @@
     border: 1px solid #f5c6cb;
 }
 
+.recipient-status-fulfilled {
+    background-color: #e0d9f7;
+    color: #4c1d95;
+    border: 1px solid #c4b5fd;
+}
+
+/* Badge counter on tab buttons */
+.recipient-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.4rem;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: #007bff;
+    color: #fff;
+    line-height: 1;
+}
+
 .recipient-empty-state {
     text-align: center;
     padding: 3rem 1rem;
@@ -1338,6 +1361,808 @@
     padding-bottom: 0.5rem;
     border-bottom: 1px solid #dee2e6;
 }
+
+/* ── Blood Inventory Section ─────────────────────────────────────────────── */
+
+.recipient-inventory-subtitle {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+/* Filter bar */
+.recipient-inventory-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.recipient-inventory-filter-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.recipient-inventory-filter-select {
+    padding: 0.5rem 0.75rem;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.recipient-inventory-filter-select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.recipient-inventory-clear-btn {
+    padding: 0.5rem 0.875rem;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.recipient-inventory-clear-btn:hover {
+    background-color: #5a6268;
+}
+
+.recipient-inventory-refresh-btn {
+    padding: 0.5rem 0.875rem;
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-left: auto;
+}
+
+.recipient-inventory-refresh-btn:hover:not(:disabled) {
+    background-color: #138496;
+}
+
+.recipient-inventory-refresh-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Loading state */
+.recipient-inventory-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+    justify-content: center;
+}
+
+.recipient-inventory-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #dee2e6;
+    border-top-color: #007bff;
+    border-radius: 50%;
+    animation: inventorySpin 0.75s linear infinite;
+}
+
+@keyframes inventorySpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Summary text (filtered view) */
+.recipient-inventory-summary {
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.recipient-inventory-highlight {
+    font-weight: 700;
+    color: #dc3545;
+    font-size: 1rem;
+}
+
+/* No-results state */
+.recipient-inventory-no-results {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.recipient-inventory-no-results-icon {
+    display: block;
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.recipient-inventory-no-results p {
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+/* Table enhancements for inventory */
+.recipient-inventory-hospital-name {
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.recipient-inventory-location {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+/* Stock badges (units count) */
+.recipient-inventory-badge {
+    display: inline-block;
+    padding: 0.3rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.recipient-inventory-badge-high {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.recipient-inventory-badge-medium {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.recipient-inventory-badge-low {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Stock level indicator */
+.recipient-stock-level {
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.recipient-stock-level-high {
+    color: #28a745;
+}
+.recipient-stock-level-medium {
+    color: #856404;
+}
+.recipient-stock-level-low {
+    color: #dc3545;
+}
+
+/* Request button (table row) */
+.recipient-request-btn {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.45rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.25);
+}
+
+.recipient-request-btn:hover {
+    background: linear-gradient(135deg, #c82333, #bd2130);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.35);
+}
+
+/* ── All-types card grid ──────────────────────────────────────────────────── */
+
+.recipient-inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+}
+
+.recipient-inventory-card {
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.2s ease;
+}
+
+.recipient-inventory-card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.recipient-inventory-card-header {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.recipient-inventory-card-name {
+    color: white;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.recipient-inventory-card-location {
+    color: #adb5bd;
+    font-size: 0.78rem;
+}
+
+.recipient-inventory-card-body {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid #dee2e6;
+}
+
+.recipient-inventory-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.6rem 0.4rem;
+    border-right: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 0.3rem;
+}
+
+.recipient-inventory-cell:nth-child(4n) {
+    border-right: none;
+}
+
+.recipient-inventory-cell-type {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #dc3545;
+}
+
+.recipient-inventory-cell-units {
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.recipient-inventory-cell-high {
+    color: #28a745;
+}
+.recipient-inventory-cell-medium {
+    color: #856404;
+}
+.recipient-inventory-cell-low {
+    color: #dc3545;
+}
+.recipient-inventory-cell-empty {
+    color: #ced4da;
+}
+
+/* Mini request button inside grid cells */
+.recipient-inventory-mini-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.recipient-inventory-mini-btn:hover {
+    background-color: #c82333;
+}
+
+.recipient-inventory-card-footer {
+    padding: 0.6rem 1rem;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-align: right;
+}
+
+@media (max-width: 480px) {
+    .recipient-inventory-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .recipient-inventory-card-body {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .recipient-inventory-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .recipient-inventory-refresh-btn {
+        margin-left: 0;
+    }
+}
+
+/* ── End Blood Inventory Section ────────────────────────────────────────── */
+
+/* ─── Blood Inventory Skeleton Loader ─────────────────────────────────── */
+@keyframes recipient-skeleton-shimmer {
+    0% {
+        background-position: -600px 0;
+    }
+    100% {
+        background-position: 600px 0;
+    }
+}
+
+.recipient-inventory-skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1rem;
+}
+
+.recipient-inventory-skeleton-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* Shared shimmer mixin applied to all skeleton pieces */
+.recipient-skeleton-line,
+.recipient-skeleton-cell-type,
+.recipient-skeleton-cell-units {
+    background: linear-gradient(90deg, #ebebeb 25%, #f7f7f7 50%, #ebebeb 75%);
+    background-size: 600px 100%;
+    animation: recipient-skeleton-shimmer 1.5s infinite linear;
+    border-radius: 4px;
+}
+
+.recipient-skeleton-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.recipient-skeleton-name {
+    height: 15px;
+    width: 68%;
+}
+
+.recipient-skeleton-location {
+    height: 11px;
+    width: 48%;
+}
+
+.recipient-skeleton-card-body {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.recipient-skeleton-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0;
+}
+
+.recipient-skeleton-cell-type {
+    height: 11px;
+    width: 30px;
+}
+
+.recipient-skeleton-cell-units {
+    height: 20px;
+    width: 26px;
+    border-radius: 6px;
+}
+
+.recipient-skeleton-card-footer {
+    padding-top: 0.5rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.recipient-skeleton-footer {
+    height: 11px;
+    width: 42%;
+}
+
+@media (max-width: 480px) {
+    .recipient-inventory-skeleton-grid {
+        grid-template-columns: 1fr;
+    }
+    .recipient-skeleton-card-body {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+/* ─── End Skeleton Loader ──────────────────────────────────────────────── */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Home Tab — My Hospital Inventory
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Banner */
+.recipient-home-banner {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    border-radius: 10px;
+    padding: 1.5rem;
+    color: white;
+    margin-bottom: 1.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.recipient-home-banner-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.recipient-home-banner-subtitle {
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+/* Stats row */
+.recipient-home-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.recipient-home-stat-card {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s;
+}
+
+.recipient-home-stat-card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.recipient-home-stat-icon {
+    font-size: 1.75rem;
+    margin-bottom: 0.4rem;
+}
+
+.recipient-home-stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #2c3e50;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+}
+
+.recipient-home-stat-sub {
+    font-size: 1rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.recipient-home-stat-label {
+    font-size: 0.82rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Section title */
+.recipient-home-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Blood type grid */
+.recipient-home-blood-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.recipient-home-blood-card {
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 1.1rem 0.85rem;
+    text-align: center;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition:
+        box-shadow 0.2s,
+        transform 0.2s;
+}
+
+.recipient-home-blood-card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Accent border per level */
+.recipient-home-blood-card-high {
+    border-top: 3px solid #28a745;
+}
+.recipient-home-blood-card-medium {
+    border-top: 3px solid #ffc107;
+}
+.recipient-home-blood-card-low {
+    border-top: 3px solid #dc3545;
+}
+.recipient-home-blood-card-empty {
+    border-top: 3px solid #dee2e6;
+}
+
+.recipient-home-blood-type-label {
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: #dc3545;
+    margin-bottom: 0.4rem;
+}
+
+.recipient-home-blood-units {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.recipient-home-blood-units-high {
+    color: #28a745;
+}
+.recipient-home-blood-units-medium {
+    color: #856404;
+}
+.recipient-home-blood-units-low {
+    color: #dc3545;
+}
+.recipient-home-blood-units-empty {
+    color: #ced4da;
+}
+
+/* Progress bar */
+.recipient-home-blood-bar-track {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    margin: 0 0 0.5rem;
+    overflow: hidden;
+}
+
+.recipient-home-blood-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.recipient-home-blood-bar-fill-high {
+    background: #28a745;
+}
+.recipient-home-blood-bar-fill-medium {
+    background: #ffc107;
+}
+.recipient-home-blood-bar-fill-low {
+    background: #dc3545;
+}
+.recipient-home-blood-bar-fill-empty {
+    background: #dee2e6;
+    width: 100% !important;
+}
+
+/* Level label */
+.recipient-home-blood-level {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.recipient-home-blood-level-high {
+    color: #28a745;
+}
+.recipient-home-blood-level-medium {
+    color: #856404;
+}
+.recipient-home-blood-level-low {
+    color: #dc3545;
+}
+.recipient-home-blood-level-empty {
+    color: #adb5bd;
+}
+
+/* Quick actions */
+.recipient-home-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.recipient-home-action-btn {
+    flex: 1;
+    min-width: 150px;
+    padding: 0.8rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition:
+        background 0.2s,
+        transform 0.15s;
+}
+
+.recipient-home-action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.recipient-home-action-btn-primary {
+    background: #dc3545;
+    color: white;
+}
+
+.recipient-home-action-btn-primary:hover {
+    background: #c82333;
+}
+
+.recipient-home-action-btn-secondary {
+    background: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+.recipient-home-action-btn-secondary:hover {
+    background: #e9ecef;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .recipient-home-stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .recipient-home-blood-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .recipient-home-banner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .recipient-home-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .recipient-home-blood-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .recipient-home-action-btn {
+        flex: 1 1 100%;
+    }
+}
+/* ─── End Home Tab ─────────────────────────────────────────────────────── */
+
+/* ─── Home Tab Skeleton ────────────────────────────────────────────────────── */
+
+/* Reuse the shimmer keyframes already defined as recipient-skeleton-shimmer */
+
+/* Base shimmer element */
+.recipient-home-sk-line {
+    background: linear-gradient(90deg, #ebebeb 25%, #f5f5f5 50%, #ebebeb 75%);
+    background-size: 600px 100%;
+    animation: recipient-skeleton-shimmer 1.5s infinite linear;
+    border-radius: 4px;
+    display: block;
+}
+
+/* Circular icon placeholder (stat cards) */
+.recipient-home-sk-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #ebebeb 25%, #f5f5f5 50%, #ebebeb 75%);
+    background-size: 600px 100%;
+    animation: recipient-skeleton-shimmer 1.5s infinite linear;
+    margin: 0 auto 0.5rem;
+}
+
+/* Horizontal bar placeholder (progress bar inside blood cards) */
+.recipient-home-sk-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #ebebeb 25%, #f5f5f5 50%, #ebebeb 75%);
+    background-size: 600px 100%;
+    animation: recipient-skeleton-shimmer 1.5s infinite linear;
+    margin-bottom: 0.5rem;
+}
+
+/* ── Size variants ──────────────────────────────────────── */
+
+/* Stat cards */
+.recipient-home-sk-stat-val {
+    height: 28px;
+    width: 45%;
+    margin: 0 auto 0.35rem;
+}
+.recipient-home-sk-stat-lbl {
+    height: 12px;
+    width: 65%;
+    margin: 0 auto;
+}
+
+/* Section title */
+.recipient-home-sk-section-ttl {
+    height: 15px;
+    width: 190px;
+    margin-bottom: 1rem;
+}
+
+/* Blood type card lines */
+.recipient-home-sk-bt-type {
+    height: 18px;
+    width: 42%;
+    margin: 0 auto 0.5rem;
+}
+.recipient-home-sk-bt-units {
+    height: 30px;
+    width: 38%;
+    margin: 0 auto 0.55rem;
+}
+.recipient-home-sk-bt-level {
+    height: 11px;
+    width: 55%;
+    margin: 0 auto;
+}
+/* ─── End Home Tab Skeleton ──────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
     .classic-main-grid {
@@ -1955,9 +2780,161 @@
     background-color: #f3f4f6;
 }
 
+.admin-stat-empty {
+    color: #9ca3af;
+    font-size: 0.875rem;
+    text-align: center;
+    padding: 1rem 0;
+}
+
 .admin-stat-label {
     font-weight: 600;
     color: #374151;
+}
+
+/* ── Admin Donations Section ─────────────────────────────────── */
+.admin-donations-section {
+    margin-top: 2rem;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.admin-donations-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: #fafafa;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-donations-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+}
+
+.admin-donations-summary {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.admin-donation-pill {
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.admin-donation-pill.total {
+    background: #f3f4f6;
+    color: #374151;
+}
+.admin-donation-pill.scheduled {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+.admin-donation-pill.completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+.admin-donation-pill.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.admin-donations-empty {
+    padding: 2rem;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+.admin-donations-table-wrap {
+    overflow-x: auto;
+}
+
+.admin-donations-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.admin-donations-table thead tr {
+    background: #f9fafb;
+}
+
+.admin-donations-table th {
+    padding: 0.65rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.admin-donations-table td {
+    padding: 0.75rem 1rem;
+    color: #111827;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+}
+
+.admin-donations-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.admin-donations-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-blood-badge {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    background: #fee2e2;
+    color: #b91c1c;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.admin-donation-status {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+.admin-donation-status.scheduled {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+.admin-donation-status.completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+.admin-donation-status.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+.admin-donation-status.accepted {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+.admin-donation-status.rejected {
+    background: #fee2e2;
+    color: #b91c1c;
 }
 
 .admin-stat-count {
@@ -2095,6 +3072,365 @@
 
     .admin-inventory-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ══════════════════════════════════════════
+   Approved Donor Requests Card
+   ══════════════════════════════════════════ */
+
+.approved-requests-card {
+    margin-top: 2rem;
+    background: #ffffff;
+    border: 1.5px solid #d1fae5;
+    border-radius: 1rem;
+    box-shadow:
+        0 4px 24px rgba(16, 185, 129, 0.1),
+        0 1px 4px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+/* ── Header ── */
+.approved-requests-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border-bottom: 1.5px solid #a7f3d0;
+}
+
+.approved-requests-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.approved-requests-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    background: #ffffff;
+    border: 2px solid #6ee7b7;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.18);
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.approved-requests-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #065f46;
+    letter-spacing: 0.01em;
+}
+
+.approved-requests-subtitle {
+    margin: 0.15rem 0 0;
+    font-size: 0.8rem;
+    color: #059669;
+}
+
+/* ── Stat Pills ── */
+.approved-requests-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.approved-requests-stats {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.approved-stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1.5px solid transparent;
+}
+
+.approved-stat-approved {
+    background: #d1fae5;
+    color: #065f46;
+    border-color: #6ee7b7;
+}
+
+.approved-stat-active {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.approved-stat-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fca5a5;
+}
+
+/* ── Filter Bar ── */
+.approved-requests-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.5rem;
+    background: #f8fffe;
+    border-bottom: 1px solid #e0f7ef;
+    flex-wrap: wrap;
+}
+
+.approved-filter-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #374151;
+    white-space: nowrap;
+}
+
+.approved-filter-select {
+    padding: 0.4rem 0.85rem;
+    border: 1.5px solid #a7f3d0;
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    color: #1f2937;
+    background: #ffffff;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    min-width: 180px;
+}
+
+.approved-filter-select:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.approved-filter-clear {
+    padding: 0.35rem 0.75rem;
+    border: 1.5px solid #fca5a5;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: #dc2626;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background 0.15s,
+        color 0.15s;
+}
+
+.approved-filter-clear:hover {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* ── Body / Table wrapper ── */
+.approved-requests-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.approved-requests-body .admin-table-container {
+    border-radius: 0.75rem;
+    border: 1px solid #d1fae5;
+    overflow: hidden;
+}
+
+.approved-requests-body .admin-table thead tr {
+    background: linear-gradient(90deg, #ecfdf5, #f0fdf4);
+}
+
+.approved-requests-body .admin-table th {
+    color: #065f46;
+    border-bottom: 2px solid #a7f3d0;
+}
+
+/* ── Empty State ── */
+.approved-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    gap: 0.5rem;
+}
+
+.approved-empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.6;
+}
+
+.approved-empty-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+}
+
+.approved-empty-hint {
+    font-size: 0.82rem;
+    color: #9ca3af;
+    margin: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .approved-requests-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .approved-requests-header-right {
+        width: 100%;
+    }
+
+    .approved-requests-stats {
+        width: 100%;
+    }
+
+    .approved-requests-filter-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .approved-filter-select {
+        width: 100%;
+    }
+
+    .approved-requests-body {
+        padding: 1rem;
+    }
+}
+
+/* ══════════════════════════════════════════
+   Admin Dashboard Skeleton Loader
+   ══════════════════════════════════════════ */
+
+@keyframes admin-sk-shimmer {
+    0% {
+        background-position: -600px 0;
+    }
+    100% {
+        background-position: 600px 0;
+    }
+}
+
+/* Base shimmer bar */
+.admin-sk-line {
+    display: block;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+    background-size: 1200px 100%;
+    animation: admin-sk-shimmer 1.6s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+/* Suppress inner hover / before effects on skeleton stat cards */
+.admin-sk-stat-card::before {
+    display: none !important;
+}
+.admin-sk-stat-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Tab skeleton pills */
+.admin-sk-tab {
+    height: 40px;
+    border-radius: 8px 8px 0 0;
+    flex-shrink: 0;
+}
+
+/* Skeleton table wrapper */
+.admin-sk-table {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+/* Each row in the skeleton table */
+.admin-sk-table-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.admin-sk-table-row:last-child {
+    border-bottom: none;
+}
+
+/* Header row gets a slightly darker tint */
+.admin-sk-table-head {
+    background: #f9fafb;
+    padding: 0.875rem 1rem;
+}
+
+.admin-sk-table-head .admin-sk-line {
+    background: linear-gradient(90deg, #d1d5db 25%, #e5e7eb 50%, #d1d5db 75%);
+    background-size: 1200px 100%;
+    animation: admin-sk-shimmer 1.6s ease-in-out infinite;
+    height: 13px;
+    border-radius: 4px;
+}
+
+/* Stagger the shimmer phase so rows feel alive */
+.admin-sk-table-row:nth-child(2) .admin-sk-line {
+    animation-delay: 0.08s;
+}
+.admin-sk-table-row:nth-child(3) .admin-sk-line {
+    animation-delay: 0.16s;
+}
+.admin-sk-table-row:nth-child(4) .admin-sk-line {
+    animation-delay: 0.24s;
+}
+.admin-sk-table-row:nth-child(5) .admin-sk-line {
+    animation-delay: 0.32s;
+}
+.admin-sk-table-row:nth-child(6) .admin-sk-line {
+    animation-delay: 0.4s;
+}
+
+/* Stagger stat cards */
+.admin-sk-stat-card:nth-child(2) .admin-sk-line {
+    animation-delay: 0.15s;
+}
+.admin-sk-stat-card:nth-child(3) .admin-sk-line {
+    animation-delay: 0.3s;
+}
+
+/* Stagger tab pills */
+.admin-sk-tab:nth-child(2) {
+    animation-delay: 0.1s;
+}
+.admin-sk-tab:nth-child(3) {
+    animation-delay: 0.2s;
+}
+.admin-sk-tab:nth-child(4) {
+    animation-delay: 0.3s;
+}
+
+@media (max-width: 768px) {
+    .admin-sk-tab {
+        width: 80px !important;
+    }
+
+    .admin-sk-table-row {
+        gap: 0.5rem;
+        padding: 0.6rem 0.75rem;
     }
 }
 

@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
             UrgencyLevelSeeder::class,
             AdminSeeder::class,
             BloodRequestSeeder::class,
+            BloodBankSeeder::class,
         ]);
     }
 }

@@ -15,7 +15,7 @@ class DonationController extends Controller
     public function getDonationStats()
     {
         $user = Auth::user();
-        
+
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
@@ -48,7 +48,7 @@ class DonationController extends Controller
     public function getDonationHistory()
     {
         $user = Auth::user();
-        
+
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
@@ -67,7 +67,7 @@ class DonationController extends Controller
     public function getScheduledDonations()
     {
         $user = Auth::user();
-        
+
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
@@ -82,12 +82,49 @@ class DonationController extends Controller
     }
 
     /**
+     * Admin: get all donations across all donors
+     */
+    public function adminIndex()
+    {
+        $donations = Donation::with(['donor', 'bloodRequest.hospital'])
+            ->orderBy('donation_date', 'desc')
+            ->get()
+            ->map(function ($d) {
+                return [
+                    'id'            => $d->id,
+                    'donor_name'    => $d->donor?->name,
+                    'blood_type'    => ($d->donor?->blood_group ?? '') . ($d->donor?->blood_type ?? ''),
+                    'donor_location'=> $d->donor?->location,
+                    'hospital_name' => $d->bloodRequest?->hospital?->name,
+                    'request_title' => $d->bloodRequest?->title,
+                    'donation_date' => $d->donation_date,
+                    'status'        => $d->status,
+                    'created_at'    => $d->created_at,
+                ];
+            });
+
+        // Summary counters
+        $summary = [
+            'total'     => $donations->count(),
+            'scheduled' => $donations->where('status', 'scheduled')->count(),
+            'completed' => $donations->where('status', 'completed')->count(),
+            'pending'   => $donations->where('status', 'pending')->count(),
+        ];
+
+        return response()->json([
+            'success'   => true,
+            'summary'   => $summary,
+            'donations' => $donations->values(),
+        ]);
+    }
+
+    /**
      * Schedule a donation for a blood request
      */
     public function scheduleDonation(Request $request)
     {
         $user = Auth::user();
-        
+
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
