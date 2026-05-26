@@ -9,6 +9,7 @@ use App\Http\Controllers\UrgencyLevelController;
 use App\Http\Controllers\auth\LoginController;
 use App\Http\Controllers\auth\RegistrationController;
 use App\Http\Controllers\BloodBankController;
+use App\Http\Controllers\DonorController;
 
 Route::get('/test', function () {
     return ['message' => 'API is working'];
@@ -51,3 +52,6 @@ Route::middleware('auth:sanctum')->get('/blood-requests/location', [BloodRequest
 
 Route::get('/blood-inventory', [BloodBankController::class, 'index']);
 Route::put('/blood-inventory/{hospitalId}', [BloodBankController::class, 'update']);
+
+// Donor statistics
+Route::get('/donor-stats', [DonorController::class, 'stats']);

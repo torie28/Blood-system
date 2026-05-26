@@ -8,7 +8,11 @@ const AdminDashboard = () => {
   const { getAuthHeaders } = useAuth();
   const [activeTab, setActiveTab] = useState("donors");
   const [_hospitalRequests, setHospitalRequests] = useState([]);
-  const [donorStats, setDonorStats] = useState({});
+  const [donorStats, setDonorStats] = useState({
+    total: 0,
+    byLocation: {},
+    byBloodType: {},
+  });
   const [bloodInventory, setBloodInventory] = useState({});
   const [hospitalInventory, setHospitalInventory] = useState([]);
   const [selectedLocation, _setSelectedLocation] = useState("");
@@ -41,6 +45,7 @@ const AdminDashboard = () => {
     fetchLocations();
     fetchDonorRequests();
     fetchHospitalInventory();
+    fetchDonorStats();
     fetchMockData();
   }, []);
 
@@ -63,6 +68,22 @@ const AdminDashboard = () => {
       console.error("Error fetching hospital inventory:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDonorStats = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/donor-stats`);
+      const data = await response.json();
+      if (data.success && data.data) {
+        setDonorStats({
+          total: data.data.total ?? 0,
+          byLocation: data.data.byLocation ?? {},
+          byBloodType: data.data.byBloodType ?? {},
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching donor stats:", error);
     }
   };
 
@@ -291,26 +312,7 @@ const AdminDashboard = () => {
         },
       ]);
 
-      setDonorStats({
-        total: 1250,
-        byLocation: {
-          Nairobi: 450,
-          Mombasa: 320,
-          Kisumu: 280,
-          Nakuru: 200,
-        },
-        byBloodType: {
-          "O+": 350,
-          "A+": 280,
-          "B+": 220,
-          "AB+": 150,
-          "O-": 120,
-          "A-": 80,
-          "B-": 30,
-          "AB-": 20,
-        },
-      });
-
+      // donorStats is now managed by fetchDonorStats (real API data)
       // bloodInventory is now managed by fetchHospitalInventory (real API data)
       // setLoading is now managed by fetchHospitalInventory as well
     }, 1000);
@@ -888,28 +890,42 @@ const AdminDashboard = () => {
                   <div className="admin-stats-card">
                     <h4>By Location</h4>
                     <div className="space-y-2">
-                      {Object.entries(donorStats.byLocation).map(
-                        ([location, count]) => (
-                          <div key={location} className="admin-stat-item">
-                            <span className="admin-stat-label">{location}</span>
-                            <span className="admin-stat-count">{count}</span>
-                          </div>
-                        ),
+                      {Object.keys(donorStats.byLocation).length === 0 ? (
+                        <p className="admin-stat-empty">
+                          No donor location data available.
+                        </p>
+                      ) : (
+                        Object.entries(donorStats.byLocation).map(
+                          ([location, count]) => (
+                            <div key={location} className="admin-stat-item">
+                              <span className="admin-stat-label">
+                                {location}
+                              </span>
+                              <span className="admin-stat-count">{count}</span>
+                            </div>
+                          ),
+                        )
                       )}
                     </div>
                   </div>
                   <div className="admin-stats-card">
                     <h4>By Blood Type</h4>
                     <div className="space-y-2">
-                      {Object.entries(donorStats.byBloodType).map(
-                        ([bloodType, count]) => (
-                          <div key={bloodType} className="admin-stat-item">
-                            <span className="admin-stat-label">
-                              {bloodType}
-                            </span>
-                            <span className="admin-stat-count">{count}</span>
-                          </div>
-                        ),
+                      {Object.keys(donorStats.byBloodType).length === 0 ? (
+                        <p className="admin-stat-empty">
+                          No donor blood type data available.
+                        </p>
+                      ) : (
+                        Object.entries(donorStats.byBloodType).map(
+                          ([bloodType, count]) => (
+                            <div key={bloodType} className="admin-stat-item">
+                              <span className="admin-stat-label">
+                                {bloodType}
+                              </span>
+                              <span className="admin-stat-count">{count}</span>
+                            </div>
+                          ),
+                        )
                       )}
                     </div>
                   </div>

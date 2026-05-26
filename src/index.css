@@ -2780,6 +2780,13 @@
     background-color: #f3f4f6;
 }
 
+.admin-stat-empty {
+    color: #9ca3af;
+    font-size: 0.875rem;
+    text-align: center;
+    padding: 1rem 0;
+}
+
 .admin-stat-label {
     font-weight: 600;
     color: #374151;
