@@ -7,6 +7,7 @@ use App\Models\Hospital;
 use App\Models\Location;
 use App\Models\BloodRequest;
 use App\Models\UrgencyLevel;
+use App\Models\BloodBank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -62,6 +63,32 @@ class InterHospitalRequestController extends Controller
                 'errors' => $e->errors()
             ], 422);
         }
+
+        // ── Stock availability check ──────────────────────────────────────────
+        $bloodBank = BloodBank::where('hospital_id', $validated['to_hospital_id'])
+            ->where('blood_group', $validated['blood_group'])
+            ->first();
+
+        $available = $bloodBank ? $bloodBank->units_available : 0;
+        $requested = (int) $validated['units_requested'];
+
+        if ($requested > $available) {
+            $toHospital = Hospital::find($validated['to_hospital_id']);
+            $hospitalName = $toHospital ? $toHospital->name : 'the selected hospital';
+
+            return response()->json([
+                'success'   => false,
+                'error_code' => 'INSUFFICIENT_STOCK',
+                'message'   => "Request denied: {$hospitalName} only has {$available} unit(s) of {$validated['blood_group']} available, but {$requested} unit(s) were requested.",
+                'data' => [
+                    'available_units' => $available,
+                    'requested_units' => $requested,
+                    'blood_group'     => $validated['blood_group'],
+                    'hospital_name'   => $hospitalName,
+                ],
+            ], 422);
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         try {
             $interHospitalRequest = InterHospitalRequest::create([

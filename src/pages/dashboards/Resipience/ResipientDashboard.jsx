@@ -86,6 +86,17 @@ const ResipientDashboard = () => {
   });
   const [submitting, setSubmitting] = useState(false);
 
+  /* ── notification banner ──────────────────────────────────── */
+  // type: 'success' | 'error' | 'warning'
+  const [notification, setNotification] = useState(null);
+
+  // Auto-dismiss after 8 seconds
+  useEffect(() => {
+    if (!notification) return;
+    const t = setTimeout(() => setNotification(null), 8000);
+    return () => clearTimeout(t);
+  }, [notification]);
+
   /* ─────────────────────────────────────────────────────────── */
   /*  Data fetching                                              */
   /* ─────────────────────────────────────────────────────────── */
@@ -184,6 +195,18 @@ const ResipientDashboard = () => {
     }
   }, [myHospitalId]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Sync from_hospital_id into formData once myHospitalId resolves.
+  // The useState initializer runs before AuthContext finishes loading,
+  // so myHospitalId is null at that point and needs to be patched in here.
+  useEffect(() => {
+    if (myHospitalId) {
+      setFormData((prev) => ({
+        ...prev,
+        from_hospital_id: String(myHospitalId),
+      }));
+    }
+  }, [myHospitalId]);
+
   // Lazy-load tabs
   useEffect(() => {
     if (activeTab === "home" && isHospitalUser && !myInventory) {
@@ -232,27 +255,56 @@ const ResipientDashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    setNotification(null);
     try {
+      // Ensure from_hospital_id is always present — myHospitalId may have
+      // resolved after the useState initializer ran (async AuthContext).
+      const payload = {
+        ...formData,
+        ...(myHospitalId ? { from_hospital_id: String(myHospitalId) } : {}),
+      };
       const res = await fetch(`${API}/inter-hospital-requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
 
       if (data.success) {
-        alert("Inter-hospital blood request submitted successfully!");
+        setNotification({
+          type: "success",
+          title: "Request Submitted",
+          message:
+            "Your inter-hospital blood request has been submitted successfully.",
+        });
         const base = emptyForm();
         if (myHospitalId) base.from_hospital_id = String(myHospitalId);
         setFormData(base);
-        // Refresh outgoing list silently
         fetchOutgoing();
+      } else if (data.error_code === "INSUFFICIENT_STOCK") {
+        const d = data.data ?? {};
+        setNotification({
+          type: "error",
+          title: "Request Denied — Insufficient Stock",
+          message: data.message,
+          detail: `Available: ${d.available_units ?? 0} unit(s) · Requested: ${d.requested_units ?? formData.units_requested} unit(s) of ${d.blood_group ?? formData.blood_group}`,
+        });
       } else {
-        alert("Error: " + (data.message || "Unknown error"));
+        setNotification({
+          type: "error",
+          title: "Request Failed",
+          message:
+            data.message || "An unknown error occurred. Please try again.",
+        });
       }
     } catch (err) {
       console.error(err);
-      alert("Error submitting request. Please try again.");
+      setNotification({
+        type: "error",
+        title: "Network Error",
+        message:
+          "Could not connect to the server. Please check your connection and try again.",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -615,6 +667,94 @@ const ResipientDashboard = () => {
               <h2 className="recipient-card-header">
                 Request Blood Transfer Between Hospitals
               </h2>
+
+              {/* Notification banner */}
+              {notification && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "0.75rem",
+                    padding: "1rem 1.25rem",
+                    marginBottom: "1.25rem",
+                    borderRadius: "0.5rem",
+                    border: `1px solid ${
+                      notification.type === "success"
+                        ? "#bbf7d0"
+                        : notification.type === "warning"
+                          ? "#fde68a"
+                          : "#fecaca"
+                    }`,
+                    background:
+                      notification.type === "success"
+                        ? "#f0fdf4"
+                        : notification.type === "warning"
+                          ? "#fffbeb"
+                          : "#fef2f2",
+                    color:
+                      notification.type === "success"
+                        ? "#15803d"
+                        : notification.type === "warning"
+                          ? "#92400e"
+                          : "#b91c1c",
+                  }}
+                  role="alert"
+                >
+                  <span
+                    style={{ fontSize: "1.4rem", lineHeight: 1, flexShrink: 0 }}
+                  >
+                    {notification.type === "success"
+                      ? "✅"
+                      : notification.type === "warning"
+                        ? "⚠️"
+                        : "🚫"}
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <strong
+                      style={{ display: "block", marginBottom: "0.2rem" }}
+                    >
+                      {notification.title}
+                    </strong>
+                    <span style={{ display: "block", fontSize: "0.9rem" }}>
+                      {notification.message}
+                    </span>
+                    {notification.detail && (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          marginTop: "0.4rem",
+                          fontSize: "0.82rem",
+                          fontWeight: 600,
+                          background:
+                            notification.type === "error"
+                              ? "#fee2e2"
+                              : "#dcfce7",
+                          padding: "0.2rem 0.6rem",
+                          borderRadius: "0.25rem",
+                        }}
+                      >
+                        {notification.detail}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setNotification(null)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: "1.1rem",
+                      lineHeight: 1,
+                      opacity: 0.6,
+                      flexShrink: 0,
+                      padding: "0.1rem 0.25rem",
+                    }}
+                    aria-label="Dismiss"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
 
               {/* Hospital identity banner */}
               {isHospitalUser && myHospitalName && (
