@@ -40,7 +40,14 @@ Route::get('/inter-hospital-requests/outgoing/{hospitalId}', [InterHospitalReque
 Route::get('/inter-hospital-requests/incoming/{hospitalId}', [InterHospitalRequestController::class, 'getIncomingRequests']);
 Route::put('/inter-hospital-requests/{id}/status', [InterHospitalRequestController::class, 'updateStatus']);
 
+// Donor request routes
+// NOTE: static segment /approved must come BEFORE /{id}
 Route::get('/donor-requests', [BloodRequestController::class, 'getDonorRequests']);
+Route::post('/donor-requests', [BloodRequestController::class, 'storeFromHospital']);
+Route::put('/donor-requests/{id}/status', [BloodRequestController::class, 'updateDonorRequestStatus']);
+
+// Location-based donor requests (for authenticated donors)
+Route::middleware('auth:sanctum')->get('/blood-requests/location', [BloodRequestController::class, 'getRequestsByLocation']);
 
 Route::get('/blood-inventory', [BloodBankController::class, 'index']);
 Route::put('/blood-inventory/{hospitalId}', [BloodBankController::class, 'update']);

@@ -97,6 +97,35 @@ const ResipientDashboard = () => {
     return () => clearTimeout(t);
   }, [notification]);
 
+  /* ── urgency levels ───────────────────────────────────────── */
+  const [urgencyLevels, setUrgencyLevels] = useState([]);
+
+  /* ── donor-request form ───────────────────────────────────── */
+  const emptyDonorReqForm = () => ({
+    blood_group: "",
+    units_needed: "",
+    urgency_level_id: "",
+    contact_person: "",
+    contact_number: "",
+    deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    title: "",
+    description: "",
+  });
+
+  const [donorReqForm, setDonorReqForm] = useState(emptyDonorReqForm);
+  const [donorReqSubmitting, setDonorReqSubmitting] = useState(false);
+  const [donorReqNotification, setDonorReqNotification] = useState(null);
+  const [myDonorRequests, setMyDonorRequests] = useState([]);
+  const [myDonorReqLoading, setMyDonorReqLoading] = useState(false);
+
+  useEffect(() => {
+    if (!donorReqNotification) return;
+    const t = setTimeout(() => setDonorReqNotification(null), 8000);
+    return () => clearTimeout(t);
+  }, [donorReqNotification]);
+
   /* ─────────────────────────────────────────────────────────── */
   /*  Data fetching                                              */
   /* ─────────────────────────────────────────────────────────── */
@@ -165,6 +194,32 @@ const ResipientDashboard = () => {
     }
   }, [myHospitalId]);
 
+  const fetchUrgencyLevels = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/urgency-levels`);
+      const data = await res.json();
+      if (data.success) setUrgencyLevels(data.data);
+    } catch (err) {
+      console.error("Error fetching urgency levels:", err);
+    }
+  }, []);
+
+  const fetchMyDonorRequests = useCallback(async () => {
+    if (!myHospitalId) return;
+    setMyDonorReqLoading(true);
+    try {
+      const res = await fetch(
+        `${API}/donor-requests?hospital_id=${myHospitalId}`,
+      );
+      const data = await res.json();
+      if (data.success) setMyDonorRequests(data.requests ?? []);
+    } catch (err) {
+      console.error("Error fetching donor requests:", err);
+    } finally {
+      setMyDonorReqLoading(false);
+    }
+  }, [myHospitalId]);
+
   // Bootstrap: hospitals + blood groups
   useEffect(() => {
     (async () => {
@@ -183,7 +238,8 @@ const ResipientDashboard = () => {
         setLoading(false);
       }
     })();
-  }, []);
+    fetchUrgencyLevels();
+  }, [fetchUrgencyLevels]);
 
   // Fetch own inventory as soon as myHospitalId is available.
   // Using [myHospitalId] instead of [] because AuthContext loads the user
@@ -220,6 +276,9 @@ const ResipientDashboard = () => {
     }
     if (activeTab === "incoming-requests" && incoming.length === 0) {
       fetchIncoming();
+    }
+    if (activeTab === "donor-request" && myDonorRequests.length === 0) {
+      fetchMyDonorRequests();
     }
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -343,6 +402,70 @@ const ResipientDashboard = () => {
     }
   };
 
+  const handleDonorReqChange = (e) => {
+    const { name, value } = e.target;
+    setDonorReqForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDonorReqSubmit = async (e) => {
+    e.preventDefault();
+    if (!myHospitalId) return;
+    setDonorReqSubmitting(true);
+    setDonorReqNotification(null);
+    try {
+      // Derive location_id from the hospital record
+      const myHospital = hospitals.find(
+        (h) => String(h.id) === String(myHospitalId),
+      );
+      const locationId = myHospital?.location_id ?? myHospital?.location?.id;
+      if (!locationId) {
+        setDonorReqNotification({
+          type: "error",
+          title: "Location Error",
+          message:
+            "Your hospital's location could not be determined. Please contact an admin.",
+        });
+        return;
+      }
+      const payload = {
+        ...donorReqForm,
+        hospital_id: String(myHospitalId),
+        location_id: String(locationId),
+      };
+      const res = await fetch(`${API}/donor-requests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDonorReqNotification({
+          type: "success",
+          title: "Request Submitted",
+          message:
+            "Your donor request has been submitted and is awaiting admin approval.",
+        });
+        setDonorReqForm(emptyDonorReqForm());
+        fetchMyDonorRequests();
+      } else {
+        setDonorReqNotification({
+          type: "error",
+          title: "Submission Failed",
+          message: data.message || "An error occurred. Please try again.",
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      setDonorReqNotification({
+        type: "error",
+        title: "Network Error",
+        message: "Could not connect to server. Please check your connection.",
+      });
+    } finally {
+      setDonorReqSubmitting(false);
+    }
+  };
+
   /* ─────────────────────────────────────────────────────────── */
   /*  Sign out                                                   */
   /* ─────────────────────────────────────────────────────────── */
@@ -438,6 +561,24 @@ const ResipientDashboard = () => {
                   className={`recipient-tab-button ${activeTab === "blood-inventory" ? "active" : ""}`}
                 >
                   🩸 Blood Inventory
+                </button>
+                <button
+                  onClick={() => setActiveTab("donor-request")}
+                  className={`recipient-tab-button ${activeTab === "donor-request" ? "active" : ""}`}
+                >
+                  🩸 Donor Request
+                  {myDonorRequests.filter((r) => r.status === "approved")
+                    .length > 0 && (
+                    <span
+                      className="recipient-tab-badge"
+                      style={{ background: "#16a34a" }}
+                    >
+                      {
+                        myDonorRequests.filter((r) => r.status === "approved")
+                          .length
+                      }
+                    </span>
+                  )}
                 </button>
               </nav>
             </div>
@@ -1537,6 +1678,355 @@ const ResipientDashboard = () => {
                     </div>
                   );
                 })()}
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════
+              TAB: Donor Request
+          ══════════════════════════════════════════════════ */}
+          {activeTab === "donor-request" && (
+            <div className="recipient-card recipient-fade-in">
+              <h2 className="recipient-card-header">
+                🩸 Request Blood From Donors
+              </h2>
+              <p
+                style={{
+                  color: "#6b7280",
+                  fontSize: "0.9rem",
+                  marginBottom: "1.25rem",
+                }}
+              >
+                Submit a request for blood donations from registered donors in
+                your area. The request will be reviewed by an admin before
+                donors are notified.
+              </p>
+
+              {/* Notification banner */}
+              {donorReqNotification && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "0.75rem",
+                    padding: "1rem 1.25rem",
+                    marginBottom: "1.25rem",
+                    borderRadius: "0.5rem",
+                    border: `1px solid ${
+                      donorReqNotification.type === "success"
+                        ? "#bbf7d0"
+                        : "#fecaca"
+                    }`,
+                    background:
+                      donorReqNotification.type === "success"
+                        ? "#f0fdf4"
+                        : "#fef2f2",
+                    color:
+                      donorReqNotification.type === "success"
+                        ? "#15803d"
+                        : "#b91c1c",
+                  }}
+                  role="alert"
+                >
+                  <span
+                    style={{ fontSize: "1.4rem", lineHeight: 1, flexShrink: 0 }}
+                  >
+                    {donorReqNotification.type === "success" ? "✅" : "🚫"}
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <strong
+                      style={{ display: "block", marginBottom: "0.2rem" }}
+                    >
+                      {donorReqNotification.title}
+                    </strong>
+                    <span style={{ display: "block", fontSize: "0.9rem" }}>
+                      {donorReqNotification.message}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setDonorReqNotification(null)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: "1.1rem",
+                      opacity: 0.6,
+                      flexShrink: 0,
+                      padding: "0.1rem 0.25rem",
+                    }}
+                    aria-label="Dismiss"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              {/* Hospital identity */}
+              {isHospitalUser && myHospitalName && (
+                <div
+                  style={{
+                    background: "#eff6ff",
+                    border: "1px solid #bfdbfe",
+                    borderRadius: "0.5rem",
+                    padding: "0.75rem 1rem",
+                    marginBottom: "1.5rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    fontSize: "0.9rem",
+                    color: "#1e40af",
+                  }}
+                >
+                  🏥 <strong>Requesting as:</strong>&nbsp;{myHospitalName}
+                </div>
+              )}
+
+              {/* Donor Request Form */}
+              <form onSubmit={handleDonorReqSubmit} className="space-y-6">
+                <div className="recipient-form-grid">
+                  {/* Blood Type */}
+                  <div className="recipient-form-group">
+                    <label className="recipient-form-label required">
+                      Blood Type Needed
+                    </label>
+                    <select
+                      name="blood_group"
+                      value={donorReqForm.blood_group}
+                      onChange={handleDonorReqChange}
+                      required
+                      className="recipient-form-select"
+                    >
+                      <option value="">Select blood type…</option>
+                      {bloodTypes.map((t) => (
+                        <option key={t.id} value={t.group}>
+                          {t.group}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Units Needed */}
+                  <div className="recipient-form-group">
+                    <label className="recipient-form-label required">
+                      Units Needed
+                    </label>
+                    <input
+                      type="number"
+                      name="units_needed"
+                      value={donorReqForm.units_needed}
+                      onChange={handleDonorReqChange}
+                      min="1"
+                      required
+                      className="recipient-form-input"
+                      placeholder="e.g. 2"
+                    />
+                  </div>
+
+                  {/* Urgency Level */}
+                  <div className="recipient-form-group">
+                    <label className="recipient-form-label required">
+                      Urgency Level
+                    </label>
+                    <select
+                      name="urgency_level_id"
+                      value={donorReqForm.urgency_level_id}
+                      onChange={handleDonorReqChange}
+                      required
+                      className="recipient-form-select"
+                    >
+                      <option value="">Select urgency…</option>
+                      {urgencyLevels.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.level}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Deadline */}
+                  <div className="recipient-form-group">
+                    <label className="recipient-form-label required">
+                      Donation Deadline
+                    </label>
+                    <input
+                      type="date"
+                      name="deadline"
+                      value={donorReqForm.deadline}
+                      onChange={handleDonorReqChange}
+                      required
+                      className="recipient-form-input"
+                    />
+                  </div>
+
+                  {/* Contact Person */}
+                  <div className="recipient-form-group">
+                    <label className="recipient-form-label required">
+                      Contact Person
+                    </label>
+                    <input
+                      type="text"
+                      name="contact_person"
+                      value={donorReqForm.contact_person}
+                      onChange={handleDonorReqChange}
+                      required
+                      className="recipient-form-input"
+                      placeholder="Name of responsible person"
+                    />
+                  </div>
+
+                  {/* Contact Number */}
+                  <div className="recipient-form-group">
+                    <label className="recipient-form-label required">
+                      Contact Number
+                    </label>
+                    <input
+                      type="tel"
+                      name="contact_number"
+                      value={donorReqForm.contact_number}
+                      onChange={handleDonorReqChange}
+                      required
+                      className="recipient-form-input"
+                      placeholder="+254 700 000 000"
+                    />
+                  </div>
+                </div>
+
+                {/* Title */}
+                <div className="recipient-form-group">
+                  <label className="recipient-form-label">
+                    Title (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={donorReqForm.title}
+                    onChange={handleDonorReqChange}
+                    className="recipient-form-input"
+                    placeholder="e.g. Urgent O+ Blood Needed for Surgery"
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="recipient-form-group">
+                  <label className="recipient-form-label">
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    name="description"
+                    value={donorReqForm.description}
+                    onChange={handleDonorReqChange}
+                    rows="3"
+                    className="recipient-form-textarea"
+                    placeholder="Any additional details about the urgency or patient situation…"
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={donorReqSubmitting || !isHospitalUser}
+                    className="recipient-submit-button"
+                  >
+                    {donorReqSubmitting
+                      ? "Submitting…"
+                      : "Submit Donor Request"}
+                  </button>
+                </div>
+              </form>
+
+              {/* Submitted Requests List */}
+              <div style={{ marginTop: "2.5rem" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: "1.1rem",
+                      fontWeight: 600,
+                      color: "#374151",
+                      margin: 0,
+                    }}
+                  >
+                    📋 My Submitted Donor Requests
+                  </h3>
+                  <button
+                    onClick={fetchMyDonorRequests}
+                    disabled={myDonorReqLoading}
+                    className="recipient-inventory-refresh-btn"
+                  >
+                    {myDonorReqLoading ? "↻ Loading…" : "↻ Refresh"}
+                  </button>
+                </div>
+
+                {myDonorReqLoading ? (
+                  <p
+                    style={{
+                      textAlign: "center",
+                      color: "#6b7280",
+                      padding: "2rem",
+                    }}
+                  >
+                    Loading…
+                  </p>
+                ) : myDonorRequests.length === 0 ? (
+                  <div className="recipient-empty-state">
+                    <p>No donor requests submitted yet.</p>
+                  </div>
+                ) : (
+                  <div className="recipient-table-container">
+                    <table className="recipient-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Title</th>
+                          <th>Blood Type</th>
+                          <th>Units</th>
+                          <th>Deadline</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {myDonorRequests.map((r) => (
+                          <tr key={r.id}>
+                            <td className="recipient-request-id">#{r.id}</td>
+                            <td>{r.title || `Request #${r.id}`}</td>
+                            <td className="recipient-blood-type">
+                              {r.blood_group}
+                            </td>
+                            <td>{r.units_needed}</td>
+                            <td>{r.deadline ?? r.request_date}</td>
+                            <td>
+                              <span
+                                className={`recipient-status-badge ${
+                                  r.status === "approved"
+                                    ? "recipient-status-approved"
+                                    : r.status === "rejected"
+                                      ? "recipient-status-rejected"
+                                      : r.status === "fulfilled"
+                                        ? "recipient-status-fulfilled"
+                                        : "recipient-status-pending"
+                                }`}
+                              >
+                                {r.status === "pending"
+                                  ? "⏳ Pending Approval"
+                                  : r.status === "approved"
+                                    ? "✅ Approved"
+                                    : r.status === "rejected"
+                                      ? "❌ Rejected"
+                                      : "✔ Fulfilled"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

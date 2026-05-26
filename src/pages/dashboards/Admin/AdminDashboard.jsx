@@ -233,6 +233,10 @@ const AdminDashboard = () => {
           deadline: request.deadline || request.request_date,
           postedDate: request.request_date,
           status: request.status || "active",
+          contact_person: request.contact_person || "N/A",
+          contact_number: request.contact_number || "N/A",
+          blood_group: request.blood_group,
+          units_needed: request.units_needed,
         }));
         console.log("Transformed requests:", transformedRequests);
         setDonorRequests(transformedRequests);
@@ -567,6 +571,62 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Error deleting donor request:", error);
       alert("Error deleting request. Please try again.");
+    }
+  };
+
+  const handleApproveDonorRequest = async (requestId) => {
+    try {
+      const apiResponse = await fetch(
+        `${API_BASE_URL}/donor-requests/${requestId}/status`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "approved" }),
+        },
+      );
+      const data = await apiResponse.json();
+      if (data.success) {
+        setDonorRequests((prev) =>
+          prev.map((r) =>
+            r.id === requestId ? { ...r, status: "approved" } : r,
+          ),
+        );
+      } else {
+        alert(
+          "Failed to approve request: " + (data.message || "Unknown error"),
+        );
+      }
+    } catch (error) {
+      console.error("Error approving donor request:", error);
+      alert("Error approving request. Please try again.");
+    }
+  };
+
+  const handleRejectDonorRequest = async (requestId) => {
+    if (!window.confirm("Are you sure you want to reject this donor request?"))
+      return;
+    try {
+      const apiResponse = await fetch(
+        `${API_BASE_URL}/donor-requests/${requestId}/status`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "rejected" }),
+        },
+      );
+      const data = await apiResponse.json();
+      if (data.success) {
+        setDonorRequests((prev) =>
+          prev.map((r) =>
+            r.id === requestId ? { ...r, status: "rejected" } : r,
+          ),
+        );
+      } else {
+        alert("Failed to reject request: " + (data.message || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error rejecting donor request:", error);
+      alert("Error rejecting request. Please try again.");
     }
   };
 
@@ -1162,21 +1222,138 @@ const AdminDashboard = () => {
                       Donor Requests Management
                     </h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      Total Requests Posted:{" "}
+                      Pending:{" "}
+                      <span className="font-semibold text-yellow-600">
+                        {
+                          donorRequests.filter((r) => r.status === "pending")
+                            .length
+                        }
+                      </span>
+                      &nbsp;|&nbsp; Approved:{" "}
+                      <span className="font-semibold text-green-600">
+                        {
+                          donorRequests.filter(
+                            (r) =>
+                              r.status === "approved" || r.status === "active",
+                          ).length
+                        }
+                      </span>
+                      &nbsp;|&nbsp; Total:{" "}
                       <span className="font-semibold text-blue-600">
                         {donorRequests.length}
-                      </span>
-                      <span className="text-xs text-gray-500 ml-2">
-                        (Auto-generated from approved inter-hospital requests)
                       </span>
                     </p>
                   </div>
                 </div>
 
-                {/* Location Filter for Donor Requests */}
+                {/* ── Pending Requests (awaiting approval) ── */}
+                {donorRequests.filter((r) => r.status === "pending").length >
+                  0 && (
+                  <div className="mb-8">
+                    <h4
+                      style={{
+                        fontSize: "1rem",
+                        fontWeight: 700,
+                        color: "#92400e",
+                        background: "#fef3c7",
+                        border: "1px solid #fde68a",
+                        borderRadius: "0.5rem",
+                        padding: "0.6rem 1rem",
+                        marginBottom: "0.75rem",
+                      }}
+                    >
+                      ⏳ Pending Approval (
+                      {
+                        donorRequests.filter((r) => r.status === "pending")
+                          .length
+                      }
+                      )
+                    </h4>
+                    <div className="admin-table-container">
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Hospital</th>
+                            <th>Blood Type</th>
+                            <th>Units</th>
+                            <th>Contact</th>
+                            <th>Deadline</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {donorRequests
+                            .filter((r) => r.status === "pending")
+                            .map((request) => (
+                              <tr key={request.id}>
+                                <td>#{request.id}</td>
+                                <td className="font-medium">
+                                  {request.hospitalName ||
+                                    request.hospital?.name ||
+                                    "—"}
+                                </td>
+                                <td className="font-medium">
+                                  {request.bloodType || request.blood_group}
+                                </td>
+                                <td>{request.units || request.units_needed}</td>
+                                <td>
+                                  <div style={{ fontSize: "0.85rem" }}>
+                                    <div>
+                                      {request.contact_person ||
+                                        request.contactPerson ||
+                                        "—"}
+                                    </div>
+                                    <div style={{ color: "#6b7280" }}>
+                                      {request.contact_number ||
+                                        request.contactNumber ||
+                                        ""}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td>{request.deadline || "—"}</td>
+                                <td>
+                                  <div className="admin-action-buttons">
+                                    <button
+                                      onClick={() =>
+                                        handleApproveDonorRequest(request.id)
+                                      }
+                                      className="admin-action-button"
+                                      style={{
+                                        background: "#16a34a",
+                                        color: "white",
+                                        border: "none",
+                                        borderRadius: "0.375rem",
+                                        padding: "0.35rem 0.75rem",
+                                        cursor: "pointer",
+                                        fontSize: "0.82rem",
+                                        fontWeight: 600,
+                                      }}
+                                    >
+                                      ✓ Approve
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        handleRejectDonorRequest(request.id)
+                                      }
+                                      className="admin-action-button delete"
+                                    >
+                                      ✕ Reject
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Location Filter ── */}
                 <div className="admin-filter-section mb-4">
                   <label className="admin-filter-label">
-                    Filter by Location
+                    Filter Approved Requests by Location
                   </label>
                   <select
                     value={selectedDonorRequestLocation}
@@ -1186,21 +1363,25 @@ const AdminDashboard = () => {
                     className="admin-filter-select"
                   >
                     <option value="">All Locations</option>
-                    {(() => {
-                      console.log(
-                        "Rendering location filter, current locations:",
-                        locations,
-                      );
-                      return locations.map((location) => (
-                        <option key={location.id} value={location.name}>
-                          {location.name}
-                        </option>
-                      ));
-                    })()}
+                    {locations.map((location) => (
+                      <option key={location.id} value={location.name}>
+                        {location.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
-                {/* Donor Requests Table */}
+                {/* ── Approved / All processed requests ── */}
+                <h4
+                  style={{
+                    fontSize: "1rem",
+                    fontWeight: 700,
+                    color: "#1e3a5f",
+                    marginBottom: "0.75rem",
+                  }}
+                >
+                  ✅ Approved Donor Requests
+                </h4>
                 <div className="admin-table-container">
                   <table className="admin-table">
                     <thead>
@@ -1217,73 +1398,81 @@ const AdminDashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredDonorRequests.length === 0 ? (
+                      {filteredDonorRequests.filter(
+                        (r) => r.status !== "pending",
+                      ).length === 0 ? (
                         <tr>
                           <td
                             colSpan="9"
                             className="text-center py-8 text-gray-500"
                           >
-                            {donorRequests.length === 0
-                              ? "No donor requests posted yet. Click 'Post New Request' to create your first request."
-                              : "No donor requests found for the selected location."}
+                            {donorRequests.filter((r) => r.status !== "pending")
+                              .length === 0
+                              ? "No approved donor requests yet."
+                              : "No requests match the selected location filter."}
                           </td>
                         </tr>
                       ) : (
-                        filteredDonorRequests.map((request) => (
-                          <tr key={request.id}>
-                            <td className="font-medium">
-                              <div>
-                                <div className="font-semibold">
-                                  {request.title}
+                        filteredDonorRequests
+                          .filter((r) => r.status !== "pending")
+                          .map((request) => (
+                            <tr key={request.id}>
+                              <td className="font-medium">
+                                <div>
+                                  <div className="font-semibold">
+                                    {request.title}
+                                  </div>
+                                  <div className="text-sm text-gray-500 max-w-xs truncate">
+                                    {request.description}
+                                  </div>
                                 </div>
-                                <div className="text-sm text-gray-500 max-w-xs truncate">
-                                  {request.description}
+                              </td>
+                              <td>{request.hospitalName}</td>
+                              <td>{request.location}</td>
+                              <td className="font-medium">
+                                {request.bloodType}
+                              </td>
+                              <td>{request.units}</td>
+                              <td>
+                                <span
+                                  className={`admin-urgency-badge admin-urgency-${(request.urgency || "").toLowerCase()}`}
+                                >
+                                  {request.urgency}
+                                </span>
+                              </td>
+                              <td>{request.deadline}</td>
+                              <td>
+                                <span
+                                  className={`admin-status-badge admin-status-${request.status}`}
+                                >
+                                  {request.status}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="admin-action-buttons">
+                                  <button
+                                    onClick={() =>
+                                      handleToggleDonorRequestStatus(request.id)
+                                    }
+                                    className={`admin-action-button ${request.status === "active" || request.status === "approved" ? "deactivate" : "activate"}`}
+                                  >
+                                    {request.status === "active" ||
+                                    request.status === "approved"
+                                      ? "Deactivate"
+                                      : "Activate"}
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteDonorRequest(request.id)
+                                    }
+                                    className="admin-action-button delete"
+                                  >
+                                    Delete
+                                  </button>
                                 </div>
-                              </div>
-                            </td>
-                            <td>{request.hospitalName}</td>
-                            <td>{request.location}</td>
-                            <td className="font-medium">{request.bloodType}</td>
-                            <td>{request.units}</td>
-                            <td>
-                              <span
-                                className={`admin-urgency-badge admin-urgency-${request.urgency.toLowerCase()}`}
-                              >
-                                {request.urgency}
-                              </span>
-                            </td>
-                            <td>{request.deadline}</td>
-                            <td>
-                              <span
-                                className={`admin-status-badge admin-status-${request.status}`}
-                              >
-                                {request.status}
-                              </span>
-                            </td>
-                            <td>
-                              <div className="admin-action-buttons">
-                                <button
-                                  onClick={() =>
-                                    handleToggleDonorRequestStatus(request.id)
-                                  }
-                                  className={`admin-action-button ${request.status === "active" ? "deactivate" : "activate"}`}
-                                >
-                                  {request.status === "active"
-                                    ? "Deactivate"
-                                    : "Activate"}
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleDeleteDonorRequest(request.id)
-                                  }
-                                  className="admin-action-button delete"
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
+                              </td>
+                            </tr>
+                          ))
                       )}
                     </tbody>
                   </table>
