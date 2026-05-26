@@ -15,6 +15,13 @@ const AdminDashboard = () => {
   });
   const [bloodInventory, setBloodInventory] = useState({});
   const [hospitalInventory, setHospitalInventory] = useState([]);
+  const [allDonations, setAllDonations] = useState([]);
+  const [donationSummary, setDonationSummary] = useState({
+    total: 0,
+    scheduled: 0,
+    completed: 0,
+    pending: 0,
+  });
   const [selectedLocation, _setSelectedLocation] = useState("");
   const [selectedDonorRequestLocation, setSelectedDonorRequestLocation] =
     useState("");
@@ -46,6 +53,7 @@ const AdminDashboard = () => {
     fetchDonorRequests();
     fetchHospitalInventory();
     fetchDonorStats();
+    fetchAllDonations();
     fetchMockData();
   }, []);
 
@@ -84,6 +92,21 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error("Error fetching donor stats:", error);
+    }
+  };
+
+  const fetchAllDonations = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/donations`);
+      const data = await response.json();
+      if (data.success) {
+        setAllDonations(data.donations ?? []);
+        setDonationSummary(
+          data.summary ?? { total: 0, scheduled: 0, completed: 0, pending: 0 },
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching all donations:", error);
     }
   };
 
@@ -929,6 +952,82 @@ const AdminDashboard = () => {
                       )}
                     </div>
                   </div>
+                </div>
+
+                {/* Donations Table */}
+                <div className="admin-donations-section">
+                  <div className="admin-donations-header">
+                    <h3 className="admin-donations-title">
+                      🩸 Donation Schedules
+                    </h3>
+                    <div className="admin-donations-summary">
+                      <span className="admin-donation-pill total">
+                        Total: {donationSummary.total}
+                      </span>
+                      <span className="admin-donation-pill scheduled">
+                        Scheduled: {donationSummary.scheduled}
+                      </span>
+                      <span className="admin-donation-pill completed">
+                        Completed: {donationSummary.completed}
+                      </span>
+                      {donationSummary.pending > 0 && (
+                        <span className="admin-donation-pill pending">
+                          Pending: {donationSummary.pending}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {allDonations.length === 0 ? (
+                    <div className="admin-donations-empty">
+                      <p>No donation records found.</p>
+                    </div>
+                  ) : (
+                    <div className="admin-donations-table-wrap">
+                      <table className="admin-donations-table">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Donor</th>
+                            <th>Blood Type</th>
+                            <th>Location</th>
+                            <th>Hospital</th>
+                            <th>Donation Date</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {allDonations.map((d, idx) => (
+                            <tr key={d.id}>
+                              <td>{idx + 1}</td>
+                              <td>{d.donor_name || "—"}</td>
+                              <td>
+                                <span className="admin-blood-badge">
+                                  {d.blood_type || "—"}
+                                </span>
+                              </td>
+                              <td>{d.donor_location || "—"}</td>
+                              <td>{d.hospital_name || "—"}</td>
+                              <td>
+                                {d.donation_date
+                                  ? new Date(
+                                      d.donation_date,
+                                    ).toLocaleDateString()
+                                  : "—"}
+                              </td>
+                              <td>
+                                <span
+                                  className={`admin-donation-status ${d.status}`}
+                                >
+                                  {d.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

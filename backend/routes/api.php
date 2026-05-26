@@ -10,6 +10,7 @@ use App\Http\Controllers\auth\LoginController;
 use App\Http\Controllers\auth\RegistrationController;
 use App\Http\Controllers\BloodBankController;
 use App\Http\Controllers\DonorController;
+use App\Http\Controllers\DonationController;
 
 Route::get('/test', function () {
     return ['message' => 'API is working'];
@@ -55,3 +56,20 @@ Route::put('/blood-inventory/{hospitalId}', [BloodBankController::class, 'update
 
 // Donor statistics
 Route::get('/donor-stats', [DonorController::class, 'stats']);
+
+// Admin: all donations (public, admin dashboard uses no token on GET calls)
+Route::get('/admin/donations', [DonationController::class, 'adminIndex']);
+
+// Authenticated-user routes (require a valid Sanctum token)
+Route::middleware('auth:sanctum')->group(function () {
+    // User profile
+    Route::get('/user/profile', [LoginController::class, 'profile']);
+    Route::put('/user/profile', [LoginController::class, 'updateProfile']);
+
+    // Donations
+    // NOTE: static segments (/stats, /history, /scheduled) must come BEFORE /{id}
+    Route::get('/donations/stats',     [DonationController::class, 'getDonationStats']);
+    Route::get('/donations/history',   [DonationController::class, 'getDonationHistory']);
+    Route::get('/donations/scheduled', [DonationController::class, 'getScheduledDonations']);
+    Route::post('/donations/schedule', [DonationController::class, 'scheduleDonation']);
+});
