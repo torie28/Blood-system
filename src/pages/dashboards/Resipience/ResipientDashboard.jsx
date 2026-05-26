@@ -45,10 +45,24 @@ const ResipientDashboard = () => {
   const isHospitalUser = user?.role === "hospital";
 
   /* ── shared state ─────────────────────────────────────────── */
-  const [activeTab, setActiveTab] = useState("new-request");
+  const [activeTab, setActiveTab] = useState(() => {
+    // AuthContext restores user asynchronously, so we read localStorage
+    // directly here to get the correct default tab on page refresh.
+    try {
+      const stored = localStorage.getItem("user");
+      const role = stored ? JSON.parse(stored)?.role : null;
+      return role === "hospital" ? "home" : "new-request";
+    } catch {
+      return "new-request";
+    }
+  });
   const [hospitals, setHospitals] = useState([]);
   const [bloodTypes, setBloodTypes] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  /* ── my hospital's own inventory (Home tab) ─────────────── */
+  const [myInventory, setMyInventory] = useState(null);
+  const [myInventoryLoading, setMyInventoryLoading] = useState(false);
 
   /* ── inventory ────────────────────────────────────────────── */
   const [inventoryData, setInventoryData] = useState([]);
@@ -75,6 +89,25 @@ const ResipientDashboard = () => {
   /* ─────────────────────────────────────────────────────────── */
   /*  Data fetching                                              */
   /* ─────────────────────────────────────────────────────────── */
+
+  const fetchMyInventory = useCallback(async () => {
+    if (!myHospitalId) return;
+    setMyInventoryLoading(true);
+    try {
+      const res = await fetch(`${API}/blood-inventory`);
+      const data = await res.json();
+      if (data.success) {
+        const mine = data.data.find(
+          (h) => String(h.id) === String(myHospitalId),
+        );
+        setMyInventory(mine ?? null);
+      }
+    } catch (err) {
+      console.error("Error fetching own inventory:", err);
+    } finally {
+      setMyInventoryLoading(false);
+    }
+  }, [myHospitalId]);
 
   const fetchInventory = useCallback(async () => {
     setInventoryLoading(true);
@@ -141,8 +174,21 @@ const ResipientDashboard = () => {
     })();
   }, []);
 
+  // Fetch own inventory as soon as myHospitalId is available.
+  // Using [myHospitalId] instead of [] because AuthContext loads the user
+  // asynchronously — myHospitalId is null on the very first render and
+  // only becomes a real value after the AuthContext useEffect fires.
+  useEffect(() => {
+    if (myHospitalId && !myInventory) {
+      fetchMyInventory();
+    }
+  }, [myHospitalId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Lazy-load tabs
   useEffect(() => {
+    if (activeTab === "home" && isHospitalUser && !myInventory) {
+      fetchMyInventory();
+    }
     if (activeTab === "blood-inventory" && inventoryData.length === 0) {
       fetchInventory();
     }
@@ -293,6 +339,14 @@ const ResipientDashboard = () => {
           <div className="recipient-tab-container">
             <div className="recipient-tab-nav">
               <nav className="-mb-px flex">
+                {isHospitalUser && (
+                  <button
+                    onClick={() => setActiveTab("home")}
+                    className={`recipient-tab-button ${activeTab === "home" ? "active" : ""}`}
+                  >
+                    🏠 Home
+                  </button>
+                )}
                 <button
                   onClick={() => setActiveTab("new-request")}
                   className={`recipient-tab-button ${activeTab === "new-request" ? "active" : ""}`}
@@ -336,6 +390,222 @@ const ResipientDashboard = () => {
               </nav>
             </div>
           </div>
+
+          {/* ══════════════════════════════════════════════════
+              TAB: Home — My Hospital Inventory
+          ══════════════════════════════════════════════════ */}
+          {activeTab === "home" && isHospitalUser && (
+            <div className="recipient-card recipient-fade-in">
+              <h2 className="recipient-card-header">
+                🏠 My Hospital Inventory
+              </h2>
+
+              {/* Banner */}
+              <div className="recipient-home-banner">
+                <div>
+                  <div className="recipient-home-banner-title">
+                    🏥 {myHospitalName ?? "Your Hospital"}
+                  </div>
+                  <div className="recipient-home-banner-subtitle">
+                    {new Date().toLocaleDateString("en-US", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </div>
+                </div>
+                <button
+                  onClick={fetchMyInventory}
+                  disabled={myInventoryLoading}
+                  className="recipient-inventory-refresh-btn"
+                >
+                  {myInventoryLoading ? "↻ Refreshing…" : "↻ Refresh"}
+                </button>
+              </div>
+
+              {/* Skeleton */}
+              {myInventoryLoading && (
+                <div className="recipient-home-skeleton">
+                  {/* Stats skeleton */}
+                  <div className="recipient-home-stats-grid">
+                    {[0, 1, 2].map((i) => (
+                      <div key={i} className="recipient-home-stat-card">
+                        <div className="recipient-home-sk-circle" />
+                        <div className="recipient-home-sk-line recipient-home-sk-stat-val" />
+                        <div className="recipient-home-sk-line recipient-home-sk-stat-lbl" />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Section title skeleton */}
+                  <div className="recipient-home-sk-line recipient-home-sk-section-ttl" />
+
+                  {/* Blood grid skeleton */}
+                  <div className="recipient-home-blood-grid">
+                    {BLOOD_TYPES.map((t) => (
+                      <div key={t} className="recipient-home-blood-card">
+                        <div className="recipient-home-sk-line recipient-home-sk-bt-type" />
+                        <div className="recipient-home-sk-line recipient-home-sk-bt-units" />
+                        <div className="recipient-home-sk-bar" />
+                        <div className="recipient-home-sk-line recipient-home-sk-bt-level" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* No data */}
+              {!myInventoryLoading && !myInventory && (
+                <div className="recipient-empty-state">
+                  <p>No inventory data found for your hospital.</p>
+                  <button
+                    onClick={fetchMyInventory}
+                    className="recipient-create-request-link"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
+
+              {/* Inventory content */}
+              {!myInventoryLoading &&
+                myInventory &&
+                (() => {
+                  const inv = myInventory.inventory ?? {};
+                  const total = myInventory.total ?? 0;
+                  const typesInStock = BLOOD_TYPES.filter(
+                    (t) => (inv[t] ?? 0) > 0,
+                  ).length;
+                  const criticalTypes = BLOOD_TYPES.filter((t) => {
+                    const u = inv[t] ?? 0;
+                    return u > 0 && u < 5;
+                  }).length;
+
+                  return (
+                    <>
+                      {/* Stats row */}
+                      <div className="recipient-home-stats-grid">
+                        <div className="recipient-home-stat-card">
+                          <div className="recipient-home-stat-icon">🩸</div>
+                          <div className="recipient-home-stat-value">
+                            {total}
+                          </div>
+                          <div className="recipient-home-stat-label">
+                            Total Units
+                          </div>
+                        </div>
+                        <div className="recipient-home-stat-card">
+                          <div className="recipient-home-stat-icon">✅</div>
+                          <div className="recipient-home-stat-value">
+                            {typesInStock}
+                            <span className="recipient-home-stat-sub">/8</span>
+                          </div>
+                          <div className="recipient-home-stat-label">
+                            Blood Types In Stock
+                          </div>
+                        </div>
+                        <div
+                          className="recipient-home-stat-card"
+                          style={{
+                            borderColor:
+                              criticalTypes > 0 ? "#f5c6cb" : "#dee2e6",
+                          }}
+                        >
+                          <div className="recipient-home-stat-icon">
+                            {criticalTypes > 0 ? "⚠️" : "🟢"}
+                          </div>
+                          <div
+                            className="recipient-home-stat-value"
+                            style={{
+                              color: criticalTypes > 0 ? "#dc3545" : "#28a745",
+                            }}
+                          >
+                            {criticalTypes}
+                          </div>
+                          <div className="recipient-home-stat-label">
+                            Critical Types (&lt;5 units)
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Blood type breakdown */}
+                      <h3 className="recipient-home-section-title">
+                        Blood Type Breakdown
+                      </h3>
+                      <div className="recipient-home-blood-grid">
+                        {BLOOD_TYPES.map((type) => {
+                          const units = inv[type] ?? 0;
+                          const level =
+                            units >= 20
+                              ? "high"
+                              : units >= 5
+                                ? "medium"
+                                : units > 0
+                                  ? "low"
+                                  : "empty";
+                          const pct = Math.min(100, (units / 50) * 100);
+                          return (
+                            <div
+                              key={type}
+                              className={`recipient-home-blood-card recipient-home-blood-card-${level}`}
+                            >
+                              <div className="recipient-home-blood-type-label">
+                                {type}
+                              </div>
+                              <div
+                                className={`recipient-home-blood-units recipient-home-blood-units-${level}`}
+                              >
+                                {units}
+                              </div>
+                              <div className="recipient-home-blood-bar-track">
+                                <div
+                                  className={`recipient-home-blood-bar-fill recipient-home-blood-bar-fill-${level}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                              <div
+                                className={`recipient-home-blood-level recipient-home-blood-level-${level}`}
+                              >
+                                {level === "high"
+                                  ? "✅ High"
+                                  : level === "medium"
+                                    ? "⚠️ Medium"
+                                    : level === "low"
+                                      ? "🔴 Low"
+                                      : "— Empty"}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Quick actions */}
+                      <div className="recipient-home-actions">
+                        <button
+                          onClick={() => setActiveTab("new-request")}
+                          className="recipient-home-action-btn recipient-home-action-btn-primary"
+                        >
+                          ➕ New Blood Request
+                        </button>
+                        <button
+                          onClick={() => setActiveTab("incoming-requests")}
+                          className="recipient-home-action-btn recipient-home-action-btn-secondary"
+                        >
+                          📥 Incoming Requests
+                        </button>
+                        <button
+                          onClick={() => setActiveTab("blood-inventory")}
+                          className="recipient-home-action-btn recipient-home-action-btn-secondary"
+                        >
+                          🩸 Browse All Hospitals
+                        </button>
+                      </div>
+                    </>
+                  );
+                })()}
+            </div>
+          )}
 
           {/* ══════════════════════════════════════════════════
               TAB: New Blood Request

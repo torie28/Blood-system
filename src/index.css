@@ -1814,6 +1814,356 @@
 }
 /* ─── End Skeleton Loader ──────────────────────────────────────────────── */
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Home Tab — My Hospital Inventory
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Banner */
+.recipient-home-banner {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    border-radius: 10px;
+    padding: 1.5rem;
+    color: white;
+    margin-bottom: 1.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.recipient-home-banner-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.recipient-home-banner-subtitle {
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+/* Stats row */
+.recipient-home-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.recipient-home-stat-card {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s;
+}
+
+.recipient-home-stat-card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+.recipient-home-stat-icon {
+    font-size: 1.75rem;
+    margin-bottom: 0.4rem;
+}
+
+.recipient-home-stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #2c3e50;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+}
+
+.recipient-home-stat-sub {
+    font-size: 1rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.recipient-home-stat-label {
+    font-size: 0.82rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Section title */
+.recipient-home-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Blood type grid */
+.recipient-home-blood-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.recipient-home-blood-card {
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 1.1rem 0.85rem;
+    text-align: center;
+    background: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition:
+        box-shadow 0.2s,
+        transform 0.2s;
+}
+
+.recipient-home-blood-card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Accent border per level */
+.recipient-home-blood-card-high {
+    border-top: 3px solid #28a745;
+}
+.recipient-home-blood-card-medium {
+    border-top: 3px solid #ffc107;
+}
+.recipient-home-blood-card-low {
+    border-top: 3px solid #dc3545;
+}
+.recipient-home-blood-card-empty {
+    border-top: 3px solid #dee2e6;
+}
+
+.recipient-home-blood-type-label {
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: #dc3545;
+    margin-bottom: 0.4rem;
+}
+
+.recipient-home-blood-units {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.recipient-home-blood-units-high {
+    color: #28a745;
+}
+.recipient-home-blood-units-medium {
+    color: #856404;
+}
+.recipient-home-blood-units-low {
+    color: #dc3545;
+}
+.recipient-home-blood-units-empty {
+    color: #ced4da;
+}
+
+/* Progress bar */
+.recipient-home-blood-bar-track {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    margin: 0 0 0.5rem;
+    overflow: hidden;
+}
+
+.recipient-home-blood-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+}
+
+.recipient-home-blood-bar-fill-high {
+    background: #28a745;
+}
+.recipient-home-blood-bar-fill-medium {
+    background: #ffc107;
+}
+.recipient-home-blood-bar-fill-low {
+    background: #dc3545;
+}
+.recipient-home-blood-bar-fill-empty {
+    background: #dee2e6;
+    width: 100% !important;
+}
+
+/* Level label */
+.recipient-home-blood-level {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.recipient-home-blood-level-high {
+    color: #28a745;
+}
+.recipient-home-blood-level-medium {
+    color: #856404;
+}
+.recipient-home-blood-level-low {
+    color: #dc3545;
+}
+.recipient-home-blood-level-empty {
+    color: #adb5bd;
+}
+
+/* Quick actions */
+.recipient-home-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.recipient-home-action-btn {
+    flex: 1;
+    min-width: 150px;
+    padding: 0.8rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition:
+        background 0.2s,
+        transform 0.15s;
+}
+
+.recipient-home-action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.recipient-home-action-btn-primary {
+    background: #dc3545;
+    color: white;
+}
+
+.recipient-home-action-btn-primary:hover {
+    background: #c82333;
+}
+
+.recipient-home-action-btn-secondary {
+    background: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+.recipient-home-action-btn-secondary:hover {
+    background: #e9ecef;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .recipient-home-stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .recipient-home-blood-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .recipient-home-banner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .recipient-home-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .recipient-home-blood-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .recipient-home-action-btn {
+        flex: 1 1 100%;
+    }
+}
+/* ─── End Home Tab ─────────────────────────────────────────────────────── */
+
+/* ─── Home Tab Skeleton ────────────────────────────────────────────────────── */
+
+/* Reuse the shimmer keyframes already defined as recipient-skeleton-shimmer */
+
+/* Base shimmer element */
+.recipient-home-sk-line {
+    background: linear-gradient(90deg, #ebebeb 25%, #f5f5f5 50%, #ebebeb 75%);
+    background-size: 600px 100%;
+    animation: recipient-skeleton-shimmer 1.5s infinite linear;
+    border-radius: 4px;
+    display: block;
+}
+
+/* Circular icon placeholder (stat cards) */
+.recipient-home-sk-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #ebebeb 25%, #f5f5f5 50%, #ebebeb 75%);
+    background-size: 600px 100%;
+    animation: recipient-skeleton-shimmer 1.5s infinite linear;
+    margin: 0 auto 0.5rem;
+}
+
+/* Horizontal bar placeholder (progress bar inside blood cards) */
+.recipient-home-sk-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #ebebeb 25%, #f5f5f5 50%, #ebebeb 75%);
+    background-size: 600px 100%;
+    animation: recipient-skeleton-shimmer 1.5s infinite linear;
+    margin-bottom: 0.5rem;
+}
+
+/* ── Size variants ──────────────────────────────────────── */
+
+/* Stat cards */
+.recipient-home-sk-stat-val {
+    height: 28px;
+    width: 45%;
+    margin: 0 auto 0.35rem;
+}
+.recipient-home-sk-stat-lbl {
+    height: 12px;
+    width: 65%;
+    margin: 0 auto;
+}
+
+/* Section title */
+.recipient-home-sk-section-ttl {
+    height: 15px;
+    width: 190px;
+    margin-bottom: 1rem;
+}
+
+/* Blood type card lines */
+.recipient-home-sk-bt-type {
+    height: 18px;
+    width: 42%;
+    margin: 0 auto 0.5rem;
+}
+.recipient-home-sk-bt-units {
+    height: 30px;
+    width: 38%;
+    margin: 0 auto 0.55rem;
+}
+.recipient-home-sk-bt-level {
+    height: 11px;
+    width: 55%;
+    margin: 0 auto;
+}
+/* ─── End Home Tab Skeleton ──────────────────────────────────────────────── */
+
 @media (max-width: 768px) {
     .classic-main-grid {
         grid-template-columns: 1fr;
