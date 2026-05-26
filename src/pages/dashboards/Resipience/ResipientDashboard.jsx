@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 const ResipientDashboard = () => {
-  const [activeTab, setActiveTab] = useState("new-request");
+  const [activeTab, setActiveTab] = useState("blood-inventory");
   const [hospitals, setHospitals] = useState([]);
   const [bloodTypes, setBloodTypes] = useState([]);
   const [_urgencyLevels, setUrgencyLevels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [inventoryData, setInventoryData] = useState([]);
   const [inventoryFilter, setInventoryFilter] = useState("");
-  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [inventoryLoading, setInventoryLoading] = useState(true);
   const [requests, _setRequests] = useState([
     {
       id: 1,
@@ -612,11 +612,28 @@ const ResipientDashboard = () => {
                 </button>
               </div>
 
-              {/* Loading state */}
+              {/* Skeleton loader */}
               {inventoryLoading && (
-                <div className="recipient-inventory-loading">
-                  <span className="recipient-inventory-spinner" />
-                  Loading inventory…
+                <div className="recipient-inventory-skeleton-grid">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="recipient-inventory-skeleton-card">
+                      <div className="recipient-skeleton-card-header">
+                        <div className="recipient-skeleton-line recipient-skeleton-name" />
+                        <div className="recipient-skeleton-line recipient-skeleton-location" />
+                      </div>
+                      <div className="recipient-skeleton-card-body">
+                        {Array.from({ length: 8 }).map((_, j) => (
+                          <div key={j} className="recipient-skeleton-cell">
+                            <div className="recipient-skeleton-cell-type" />
+                            <div className="recipient-skeleton-cell-units" />
+                          </div>
+                        ))}
+                      </div>
+                      <div className="recipient-skeleton-card-footer">
+                        <div className="recipient-skeleton-line recipient-skeleton-footer" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
 

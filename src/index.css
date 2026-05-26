@@ -1690,6 +1690,107 @@
 
 /* ── End Blood Inventory Section ────────────────────────────────────────── */
 
+/* ─── Blood Inventory Skeleton Loader ─────────────────────────────────── */
+@keyframes recipient-skeleton-shimmer {
+    0% {
+        background-position: -600px 0;
+    }
+    100% {
+        background-position: 600px 0;
+    }
+}
+
+.recipient-inventory-skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1rem;
+}
+
+.recipient-inventory-skeleton-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* Shared shimmer mixin applied to all skeleton pieces */
+.recipient-skeleton-line,
+.recipient-skeleton-cell-type,
+.recipient-skeleton-cell-units {
+    background: linear-gradient(90deg, #ebebeb 25%, #f7f7f7 50%, #ebebeb 75%);
+    background-size: 600px 100%;
+    animation: recipient-skeleton-shimmer 1.5s infinite linear;
+    border-radius: 4px;
+}
+
+.recipient-skeleton-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.recipient-skeleton-name {
+    height: 15px;
+    width: 68%;
+}
+
+.recipient-skeleton-location {
+    height: 11px;
+    width: 48%;
+}
+
+.recipient-skeleton-card-body {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.recipient-skeleton-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0;
+}
+
+.recipient-skeleton-cell-type {
+    height: 11px;
+    width: 30px;
+}
+
+.recipient-skeleton-cell-units {
+    height: 20px;
+    width: 26px;
+    border-radius: 6px;
+}
+
+.recipient-skeleton-card-footer {
+    padding-top: 0.5rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.recipient-skeleton-footer {
+    height: 11px;
+    width: 42%;
+}
+
+@media (max-width: 480px) {
+    .recipient-inventory-skeleton-grid {
+        grid-template-columns: 1fr;
+    }
+    .recipient-skeleton-card-body {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+/* ─── End Skeleton Loader ──────────────────────────────────────────────── */
+
 @media (max-width: 768px) {
     .classic-main-grid {
         grid-template-columns: 1fr;
