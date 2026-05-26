@@ -6,7 +6,7 @@ const API_BASE_URL = "http://localhost:8000/api";
 
 const AdminDashboard = () => {
   const { getAuthHeaders } = useAuth();
-  const [activeTab, setActiveTab] = useState("inter-hospital-requests");
+  const [activeTab, setActiveTab] = useState("donors");
   const [_hospitalRequests, setHospitalRequests] = useState([]);
   const [donorStats, setDonorStats] = useState({});
   const [bloodInventory, setBloodInventory] = useState({});
@@ -28,7 +28,7 @@ const AdminDashboard = () => {
   });
   const [donorRequests, setDonorRequests] = useState([]);
   const [bloodRequests, _setBloodRequests] = useState([]);
-  const [interHospitalRequests, setInterHospitalRequests] = useState([]);
+
   const [_bloodTypes, setBloodTypes] = useState([]);
   const [_urgencyLevels, setUrgencyLevels] = useState([]);
   const [locations, setLocations] = useState([]);
@@ -40,7 +40,6 @@ const AdminDashboard = () => {
     fetchUrgencyLevels();
     fetchLocations();
     fetchDonorRequests();
-    fetchInterHospitalRequests();
     fetchHospitalInventory();
     fetchMockData();
   }, []);
@@ -243,41 +242,6 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Error fetching donor requests:", error);
       console.error("Full error details:", error.message);
-    }
-  };
-
-  const fetchInterHospitalRequests = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/inter-hospital-requests`);
-      const data = await response.json();
-      console.log("Raw API response:", data);
-      if (data.success && data.data) {
-        console.log("Sample request data:", data.data[0]);
-        console.log("From hospital object:", data.data[0]?.from_hospital);
-        console.log("To hospital object:", data.data[0]?.to_hospital);
-
-        // Transform the data to match the frontend structure
-        const transformedRequests = data.data.map((request) => ({
-          id: request.id,
-          fromHospitalName: request.from_hospital?.name || "Unknown Hospital",
-          toHospitalName: request.to_hospital?.name || "Unknown Hospital",
-          location:
-            request.location?.city ||
-            request.location?.region ||
-            "Unknown Location",
-          bloodType: request.blood_group,
-          units: request.units_requested,
-          status: request.status,
-          requestDate: request.request_date,
-          urgency: "Medium", // Default urgency since it's not in the model
-        }));
-        console.log("Transformed requests:", transformedRequests);
-        setInterHospitalRequests(transformedRequests);
-      } else {
-        console.error("No data received or API returned error:", data);
-      }
-    } catch (error) {
-      console.error("Error fetching inter-hospital requests:", error);
     }
   };
 
@@ -551,62 +515,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleInterHospitalRequestResponse = async (requestId, response) => {
-    try {
-      // Check authentication status
-      const token = localStorage.getItem("authToken");
-      console.log("Token in localStorage:", token);
-      console.log("User authenticated:", !!token);
-
-      // Use proper headers (backend auth is temporarily disabled for testing)
-      const headers = getAuthHeaders();
-      console.log("Auth headers:", headers);
-
-      const apiResponse = await fetch(
-        `${API_BASE_URL}/inter-hospital-requests/${requestId}/status`,
-        {
-          method: "PUT",
-          headers: headers,
-          body: JSON.stringify({
-            status: response === "approve" ? "approved" : "rejected",
-          }),
-        },
-      );
-
-      const data = await apiResponse.json();
-
-      if (data.success) {
-        setInterHospitalRequests((prev) =>
-          prev.map((req) =>
-            req.id === requestId
-              ? {
-                  ...req,
-                  status: response === "approve" ? "approved" : "rejected",
-                }
-              : req,
-          ),
-        );
-
-        // If approved, refresh donor requests to show the new blood request created for donors
-        if (response === "approve") {
-          console.log("Request approved, refreshing donor requests...");
-          fetchDonorRequests(); // This will refresh the donor requests tab
-        }
-
-        alert(
-          `Request ${response}d successfully!${response === "approve" ? " Blood request created for donors to view." : ""}`,
-        );
-      } else {
-        alert(
-          `Failed to ${response} request: ` + (data.message || "Unknown error"),
-        );
-      }
-    } catch (error) {
-      console.error("Error updating inter-hospital request:", error);
-      alert(`Error updating request. Please try again.`);
-    }
-  };
-
   const handleToggleDonorRequestStatus = async (requestId) => {
     try {
       const request = donorRequests.find((r) => r.id === requestId);
@@ -699,15 +607,9 @@ const AdminDashboard = () => {
               <p className="admin-stat-description">Registered donors</p>
             </div>
             <div className="admin-stat-card">
-              <h3 className="admin-stat-title">Pending Requests</h3>
-              <p className="admin-stat-value pending">
-                {
-                  interHospitalRequests.filter(
-                    (req) => req.status === "pending",
-                  ).length
-                }
-              </p>
-              <p className="admin-stat-description">Awaiting response</p>
+              <h3 className="admin-stat-title">Donor Requests</h3>
+              <p className="admin-stat-value pending">{donorRequests.length}</p>
+              <p className="admin-stat-description">Active campaigns</p>
             </div>
             <div className="admin-stat-card">
               <h3 className="admin-stat-title">Blood Units Available</h3>
@@ -753,14 +655,6 @@ const AdminDashboard = () => {
                   }`}
                 >
                   Donor Requests
-                </button>
-                <button
-                  onClick={() => setActiveTab("inter-hospital-requests")}
-                  className={`admin-tab-button ${
-                    activeTab === "inter-hospital-requests" ? "active" : ""
-                  }`}
-                >
-                  Inter-Hospital Requests
                 </button>
               </nav>
             </div>
@@ -1390,135 +1284,6 @@ const AdminDashboard = () => {
                             </td>
                           </tr>
                         ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Inter-Hospital Requests Tab */}
-            {activeTab === "inter-hospital-requests" && (
-              <div className="admin-tab-content">
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-800">
-                      Inter-Hospital Blood Requests
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Total Requests:{" "}
-                      <span className="font-semibold text-blue-600">
-                        {interHospitalRequests.length}
-                      </span>{" "}
-                      | Pending:{" "}
-                      <span className="font-semibold text-yellow-600">
-                        {
-                          interHospitalRequests.filter(
-                            (req) => req.status === "pending",
-                          ).length
-                        }
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Inter-Hospital Requests Table */}
-                <div className="admin-table-container">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>From Hospital</th>
-                        <th>To Hospital</th>
-                        <th>Location</th>
-                        <th>Blood Type</th>
-                        <th>Units</th>
-                        <th>Request Date</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {interHospitalRequests.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan="8"
-                            className="text-center py-8 text-gray-500"
-                          >
-                            No inter-hospital requests found.
-                          </td>
-                        </tr>
-                      ) : (
-                        interHospitalRequests.map((request) => {
-                          console.log("Rendering request:", request);
-                          console.log(
-                            "fromHospitalName:",
-                            request.fromHospitalName,
-                          );
-                          console.log(
-                            "toHospitalName:",
-                            request.toHospitalName,
-                          );
-                          return (
-                            <tr key={request.id}>
-                              <td className="font-medium">
-                                {request.fromHospitalName ||
-                                  "DEBUG: No fromHospitalName"}
-                              </td>
-                              <td className="font-medium">
-                                {request.toHospitalName ||
-                                  "DEBUG: No toHospitalName"}
-                              </td>
-                              <td>{request.location}</td>
-                              <td className="font-medium">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                  {request.bloodType}
-                                </span>
-                              </td>
-                              <td>{request.units}</td>
-                              <td>{request.requestDate}</td>
-                              <td>
-                                <span
-                                  className={`admin-status-badge admin-status-${request.status}`}
-                                >
-                                  {request.status}
-                                </span>
-                              </td>
-                              <td>
-                                {request.status === "pending" && (
-                                  <div className="admin-action-buttons">
-                                    <button
-                                      onClick={() =>
-                                        handleInterHospitalRequestResponse(
-                                          request.id,
-                                          "approve",
-                                        )
-                                      }
-                                      className="admin-action-button approve"
-                                    >
-                                      Approve
-                                    </button>
-                                    <button
-                                      onClick={() =>
-                                        handleInterHospitalRequestResponse(
-                                          request.id,
-                                          "reject",
-                                        )
-                                      }
-                                      className="admin-action-button reject"
-                                    >
-                                      Reject
-                                    </button>
-                                  </div>
-                                )}
-                                {request.status !== "pending" && (
-                                  <span className="text-gray-400">
-                                    {request.status}
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })
                       )}
                     </tbody>
                   </table>
