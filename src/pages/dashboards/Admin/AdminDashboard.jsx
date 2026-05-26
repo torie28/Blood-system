@@ -7,11 +7,11 @@ const API_BASE_URL = "http://localhost:8000/api";
 const AdminDashboard = () => {
   const { getAuthHeaders } = useAuth();
   const [activeTab, setActiveTab] = useState("inter-hospital-requests");
-  const [hospitalRequests, setHospitalRequests] = useState([]);
+  const [_hospitalRequests, setHospitalRequests] = useState([]);
   const [donorStats, setDonorStats] = useState({});
   const [bloodInventory, setBloodInventory] = useState({});
   const [hospitalInventory, setHospitalInventory] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedLocation, _setSelectedLocation] = useState("");
   const [selectedDonorRequestLocation, setSelectedDonorRequestLocation] =
     useState("");
   const [loading, setLoading] = useState(true);
@@ -27,10 +27,10 @@ const AdminDashboard = () => {
     address: "",
   });
   const [donorRequests, setDonorRequests] = useState([]);
-  const [bloodRequests, setBloodRequests] = useState([]);
+  const [bloodRequests, _setBloodRequests] = useState([]);
   const [interHospitalRequests, setInterHospitalRequests] = useState([]);
-  const [bloodTypes, setBloodTypes] = useState([]);
-  const [urgencyLevels, setUrgencyLevels] = useState([]);
+  const [_bloodTypes, setBloodTypes] = useState([]);
+  const [_urgencyLevels, setUrgencyLevels] = useState([]);
   const [locations, setLocations] = useState([]);
 
   // Fetch data from API
@@ -348,7 +348,7 @@ const AdminDashboard = () => {
     }, 1000);
   };
 
-  const filteredRequests = selectedLocation
+  const _filteredRequests = selectedLocation
     ? bloodRequests.filter((req) => req.location === selectedLocation)
     : bloodRequests;
 
@@ -358,20 +358,20 @@ const AdminDashboard = () => {
       )
     : donorRequests;
 
-  const getUniqueLocations = () => {
+  const _getUniqueLocations = () => {
     return [...new Set(bloodRequests.map((req) => req.location))];
   };
 
-  const getUniqueDonorRequestLocations = () => {
+  const _getUniqueDonorRequestLocations = () => {
     return [...new Set(donorRequests.map((req) => req.location))];
   };
 
-  const getDatabaseLocations = () => {
+  const _getDatabaseLocations = () => {
     // Only return locations from the database
     return locations.map((location) => location.name);
   };
 
-  const getUrgencyColor = (urgency) => {
+  const _getUrgencyColor = (urgency) => {
     switch (urgency) {
       case "High":
         return "text-red-600 bg-red-100";
@@ -384,7 +384,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const getStatusColor = (status) => {
+  const _getStatusColor = (status) => {
     switch (status) {
       case "approved":
         return "text-green-600 bg-green-100";
@@ -604,6 +604,61 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Error updating inter-hospital request:", error);
       alert(`Error updating request. Please try again.`);
+    }
+  };
+
+  const handleToggleDonorRequestStatus = async (requestId) => {
+    try {
+      const request = donorRequests.find((r) => r.id === requestId);
+      if (!request) return;
+      const newStatus = request.status === "active" ? "inactive" : "active";
+      const apiResponse = await fetch(
+        `${API_BASE_URL}/donor-requests/${requestId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+          body: JSON.stringify({ status: newStatus }),
+        },
+      );
+      const data = await apiResponse.json();
+      if (data.success) {
+        setDonorRequests((prev) =>
+          prev.map((r) =>
+            r.id === requestId ? { ...r, status: newStatus } : r,
+          ),
+        );
+      } else {
+        alert(
+          "Failed to update request status: " +
+            (data.message || "Unknown error"),
+        );
+      }
+    } catch (error) {
+      console.error("Error toggling donor request status:", error);
+      alert("Error updating request. Please try again.");
+    }
+  };
+
+  const handleDeleteDonorRequest = async (requestId) => {
+    if (!window.confirm("Are you sure you want to delete this request?"))
+      return;
+    try {
+      const apiResponse = await fetch(
+        `${API_BASE_URL}/donor-requests/${requestId}`,
+        {
+          method: "DELETE",
+          headers: getAuthHeaders(),
+        },
+      );
+      const data = await apiResponse.json();
+      if (data.success) {
+        setDonorRequests((prev) => prev.filter((r) => r.id !== requestId));
+      } else {
+        alert("Failed to delete request: " + (data.message || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error deleting donor request:", error);
+      alert("Error deleting request. Please try again.");
     }
   };
 
