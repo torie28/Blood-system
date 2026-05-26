@@ -7,9 +7,10 @@ use App\Http\Controllers\HospitalController;
 use App\Http\Controllers\BloodGroupController;
 use App\Http\Controllers\UrgencyLevelController;
 use App\Http\Controllers\auth\LoginController;
+use App\Http\Controllers\auth\RegistrationController;
 use App\Http\Controllers\BloodBankController;
 
-Route::get('/test', function() {
+Route::get('/test', function () {
     return ['message' => 'API is working'];
 });
 
@@ -21,21 +22,23 @@ Route::delete('/hospitals/{id}', [HospitalController::class, 'destroy']);
 Route::get('/blood-groups', [BloodGroupController::class, 'index']);
 Route::get('/urgency-levels', [UrgencyLevelController::class, 'index']);
 
-Route::get('/locations', function() {
+Route::get('/locations', function () {
     return response()->json(['success' => true, 'data' => []]);
 });
 
-Route::post('/register', function() {
-    return response()->json(['success' => true, 'message' => 'Registration endpoint']);
-});
-
+// Auth routes
+Route::post('/register', [RegistrationController::class, 'register']);
 Route::post('/login', [LoginController::class, 'login']);
 
+// Inter-hospital blood request routes
+// NOTE: static segment routes (/pending) must come BEFORE parameterised ones (/{id})
 Route::get('/inter-hospital-requests', [InterHospitalRequestController::class, 'index']);
 Route::post('/inter-hospital-requests', [InterHospitalRequestController::class, 'store']);
-Route::put('/inter-hospital-requests/{id}/status', [InterHospitalRequestController::class, 'updateStatus']);
-Route::get('/inter-hospital-requests/hospital/{hospitalId}', [InterHospitalRequestController::class, 'getHospitalRequests']);
 Route::get('/inter-hospital-requests/pending', [InterHospitalRequestController::class, 'getPendingRequests']);
+Route::get('/inter-hospital-requests/hospital/{hospitalId}', [InterHospitalRequestController::class, 'getHospitalRequests']);
+Route::get('/inter-hospital-requests/outgoing/{hospitalId}', [InterHospitalRequestController::class, 'getOutgoingRequests']);
+Route::get('/inter-hospital-requests/incoming/{hospitalId}', [InterHospitalRequestController::class, 'getIncomingRequests']);
+Route::put('/inter-hospital-requests/{id}/status', [InterHospitalRequestController::class, 'updateStatus']);
 
 Route::get('/donor-requests', [BloodRequestController::class, 'getDonorRequests']);
 

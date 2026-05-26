@@ -37,7 +37,7 @@ class InterHospitalRequestController extends Controller
     {
         Log::info('InterHospitalRequest store method called');
         Log::info('Request data:', $request->all());
-        
+
         try {
             $validated = $request->validate([
                 'from_hospital_id' => 'required|exists:hospitals,id',
@@ -203,6 +203,38 @@ class InterHospitalRequestController extends Controller
         $requests = InterHospitalRequest::with(['fromHospital', 'toHospital', 'location'])
             ->where('status', 'pending')
             ->orderBy('request_date', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $requests
+        ]);
+    }
+
+    /**
+     * Get outgoing requests for a hospital (requests this hospital sent to others)
+     */
+    public function getOutgoingRequests($hospitalId)
+    {
+        $requests = InterHospitalRequest::with(['fromHospital', 'toHospital', 'location'])
+            ->where('from_hospital_id', $hospitalId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $requests
+        ]);
+    }
+
+    /**
+     * Get incoming requests for a hospital (requests other hospitals sent to this hospital)
+     */
+    public function getIncomingRequests($hospitalId)
+    {
+        $requests = InterHospitalRequest::with(['fromHospital', 'toHospital', 'location'])
+            ->where('to_hospital_id', $hospitalId)
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json([

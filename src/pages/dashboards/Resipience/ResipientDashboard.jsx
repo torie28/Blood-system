@@ -1,143 +1,183 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../contexts/AuthContext.jsx";
 
+/* ─────────────────────────────────────────────────────────────
+   Helpers
+───────────────────────────────────────────────────────────── */
+const API = "http://localhost:8000/api";
+const BLOOD_TYPES = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
+
+const STATUS_CLASSES = {
+  pending: "recipient-status-pending",
+  approved: "recipient-status-approved",
+  rejected: "recipient-status-rejected",
+  fulfilled: "recipient-status-fulfilled",
+};
+
+const emptyForm = () => ({
+  from_hospital_id: "",
+  to_hospital_id: "",
+  location_id: "",
+  blood_group: "",
+  units_requested: "",
+  request_date: new Date().toISOString().split("T")[0],
+  contact_person: "",
+  phone_number: "",
+  email: "",
+  patient_name: "",
+  patient_age: "",
+  patient_gender: "",
+  reason: "",
+  medical_history: "",
+});
+
+/* ─────────────────────────────────────────────────────────────
+   Component
+───────────────────────────────────────────────────────────── */
 const ResipientDashboard = () => {
-  const [activeTab, setActiveTab] = useState("blood-inventory");
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Determine the hospital linked to the logged-in user (hospital role)
+  const myHospitalId = user?.hospital_id ?? null;
+  const myHospitalName = user?.hospital?.name ?? null;
+  const isHospitalUser = user?.role === "hospital";
+
+  /* ── shared state ─────────────────────────────────────────── */
+  const [activeTab, setActiveTab] = useState("new-request");
   const [hospitals, setHospitals] = useState([]);
   const [bloodTypes, setBloodTypes] = useState([]);
-  const [_urgencyLevels, setUrgencyLevels] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  /* ── inventory ────────────────────────────────────────────── */
   const [inventoryData, setInventoryData] = useState([]);
   const [inventoryFilter, setInventoryFilter] = useState("");
   const [inventoryLoading, setInventoryLoading] = useState(true);
-  const [requests, _setRequests] = useState([
-    {
-      id: 1,
-      hospitalName: "City General Hospital",
-      bloodType: "A+",
-      units: 2,
-      urgency: "High",
-      status: "Pending",
-      date: "2024-03-24",
-      contactPerson: "Dr. Smith",
-    },
-    {
-      id: 2,
-      hospitalName: "St. Mary Medical Center",
-      bloodType: "O-",
-      units: 1,
-      urgency: "Medium",
-      status: "Approved",
-      date: "2024-03-23",
-      contactPerson: "Nurse Johnson",
-    },
-  ]);
 
-  const [formData, setFormData] = useState({
-    from_hospital_id: "",
-    to_hospital_id: "",
-    location_id: "",
-    blood_group: "",
-    units_requested: "",
-    request_date: new Date().toISOString().split("T")[0],
-    contact_person: "",
-    phone_number: "",
-    email: "",
-    patient_name: "",
-    patient_age: "",
-    patient_gender: "",
-    reason: "",
-    medical_history: "",
+  /* ── outgoing requests (My Requests) ─────────────────────── */
+  const [outgoing, setOutgoing] = useState([]);
+  const [outgoingLoading, setOutgoingLoading] = useState(false);
+
+  /* ── incoming requests ────────────────────────────────────── */
+  const [incoming, setIncoming] = useState([]);
+  const [incomingLoading, setIncomingLoading] = useState(false);
+  const [updatingId, setUpdatingId] = useState(null);
+
+  /* ── new-request form ─────────────────────────────────────── */
+  const [formData, setFormData] = useState(() => {
+    const base = emptyForm();
+    if (myHospitalId) base.from_hospital_id = String(myHospitalId);
+    return base;
   });
+  const [submitting, setSubmitting] = useState(false);
 
-  const BLOOD_TYPES = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
+  /* ─────────────────────────────────────────────────────────── */
+  /*  Data fetching                                              */
+  /* ─────────────────────────────────────────────────────────── */
 
-  const fetchInventory = async () => {
+  const fetchInventory = useCallback(async () => {
     setInventoryLoading(true);
     try {
-      const response = await fetch("http://localhost:8000/api/blood-inventory");
-      const data = await response.json();
-      if (data.success) {
-        setInventoryData(data.data);
-      }
-    } catch (error) {
-      console.error("Error fetching inventory:", error);
+      const res = await fetch(`${API}/blood-inventory`);
+      const data = await res.json();
+      if (data.success) setInventoryData(data.data);
+    } catch (err) {
+      console.error("Error fetching inventory:", err);
     } finally {
       setInventoryLoading(false);
     }
-  };
+  }, []);
 
+  const fetchOutgoing = useCallback(async () => {
+    if (!myHospitalId) return;
+    setOutgoingLoading(true);
+    try {
+      const res = await fetch(
+        `${API}/inter-hospital-requests/outgoing/${myHospitalId}`,
+      );
+      const data = await res.json();
+      if (data.success) setOutgoing(data.data);
+    } catch (err) {
+      console.error("Error fetching outgoing requests:", err);
+    } finally {
+      setOutgoingLoading(false);
+    }
+  }, [myHospitalId]);
+
+  const fetchIncoming = useCallback(async () => {
+    if (!myHospitalId) return;
+    setIncomingLoading(true);
+    try {
+      const res = await fetch(
+        `${API}/inter-hospital-requests/incoming/${myHospitalId}`,
+      );
+      const data = await res.json();
+      if (data.success) setIncoming(data.data);
+    } catch (err) {
+      console.error("Error fetching incoming requests:", err);
+    } finally {
+      setIncomingLoading(false);
+    }
+  }, [myHospitalId]);
+
+  // Bootstrap: hospitals + blood groups
+  useEffect(() => {
+    (async () => {
+      try {
+        const [hRes, bgRes] = await Promise.all([
+          fetch(`${API}/hospitals`),
+          fetch(`${API}/blood-groups`),
+        ]);
+        const hData = await hRes.json();
+        const bgData = await bgRes.json();
+        if (hData.success) setHospitals(hData.data);
+        if (bgData.success) setBloodTypes(bgData.data);
+      } catch (err) {
+        console.error("Error loading form data:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // Lazy-load tabs
   useEffect(() => {
     if (activeTab === "blood-inventory" && inventoryData.length === 0) {
       fetchInventory();
     }
-  }, [activeTab, inventoryData.length]);
+    if (activeTab === "my-requests" && outgoing.length === 0) {
+      fetchOutgoing();
+    }
+    if (activeTab === "incoming-requests" && incoming.length === 0) {
+      fetchIncoming();
+    }
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [hospitalsResponse, bloodTypesResponse, urgencyLevelsResponse] =
-          await Promise.all([
-            fetch("http://localhost:8000/api/hospitals"),
-            fetch("http://localhost:8000/api/blood-groups"),
-            fetch("http://localhost:8000/api/urgency-levels"),
-          ]);
-
-        const hospitalsData = await hospitalsResponse.json();
-        const bloodTypesData = await bloodTypesResponse.json();
-        const urgencyLevelsData = await urgencyLevelsResponse.json();
-
-        if (hospitalsData.success) {
-          setHospitals(hospitalsData.data);
-        }
-
-        if (bloodTypesData.success) {
-          setBloodTypes(bloodTypesData.data);
-        }
-
-        if (urgencyLevelsData.success) {
-          setUrgencyLevels(urgencyLevelsData.data);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  /* ─────────────────────────────────────────────────────────── */
+  /*  Form handlers                                              */
+  /* ─────────────────────────────────────────────────────────── */
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => {
-      const updated = {
-        ...prev,
-        [name]: value,
-      };
-
-      // If to_hospital_id is changed, automatically set the location_id
+      const updated = { ...prev, [name]: value };
+      // Auto-fill location from the selected destination hospital
       if (name === "to_hospital_id") {
-        const selectedHospital = hospitals.find((h) => h.id == value);
-        if (selectedHospital && selectedHospital.location_id) {
-          updated.location_id = selectedHospital.location_id;
-        }
+        const h = hospitals.find((h) => String(h.id) === value);
+        if (h?.location_id) updated.location_id = String(h.location_id);
       }
-
       return updated;
     });
   };
 
   const handleRequestFromInventory = (hospitalId, bloodType) => {
-    const hospital = hospitals.find((h) => String(h.id) === String(hospitalId));
+    const h = hospitals.find((h) => String(h.id) === String(hospitalId));
     setFormData((prev) => ({
       ...prev,
       to_hospital_id: String(hospitalId),
       blood_group: bloodType,
-      location_id: hospital?.location_id
-        ? String(hospital.location_id)
-        : prev.location_id,
+      location_id: h?.location_id ? String(h.location_id) : prev.location_id,
     }));
     setActiveTab("new-request");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -145,104 +185,151 @@ const ResipientDashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    console.log("Submitting form data:", formData);
-
+    setSubmitting(true);
     try {
-      const _token = localStorage.getItem("token");
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/inter-hospital-requests",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            // 'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(formData),
-        },
-      );
-
-      console.log("Response status:", response.status);
-      console.log("Response headers:", response.headers);
-
-      const data = await response.json();
-      console.log("Response data:", data);
+      const res = await fetch(`${API}/inter-hospital-requests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
 
       if (data.success) {
         alert("Inter-hospital blood request submitted successfully!");
-
-        // Reset form
-        setFormData({
-          from_hospital_id: "",
-          to_hospital_id: "",
-          location_id: "",
-          blood_group: "",
-          units_requested: "",
-          request_date: new Date().toISOString().split("T")[0],
-          contact_person: "",
-          phone_number: "",
-          email: "",
-          patient_name: "",
-          patient_age: "",
-          patient_gender: "",
-          reason: "",
-          medical_history: "",
-        });
+        const base = emptyForm();
+        if (myHospitalId) base.from_hospital_id = String(myHospitalId);
+        setFormData(base);
+        // Refresh outgoing list silently
+        fetchOutgoing();
       } else {
-        console.error("Server error:", data);
-        alert("Error submitting request: " + (data.message || "Unknown error"));
+        alert("Error: " + (data.message || "Unknown error"));
       }
-    } catch (error) {
-      console.error("Error submitting request:", error);
+    } catch (err) {
+      console.error(err);
       alert("Error submitting request. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  /* ─────────────────────────────────────────────────────────── */
+  /*  Incoming request status update                             */
+  /* ─────────────────────────────────────────────────────────── */
+
+  const handleStatusUpdate = async (requestId, newStatus) => {
+    setUpdatingId(requestId);
+    try {
+      const res = await fetch(
+        `${API}/inter-hospital-requests/${requestId}/status`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        },
+      );
+      const data = await res.json();
+      if (data.success) {
+        setIncoming((prev) =>
+          prev.map((r) =>
+            r.id === requestId ? { ...r, status: newStatus } : r,
+          ),
+        );
+      } else {
+        alert("Failed to update status: " + (data.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating status. Please try again.");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  /* ─────────────────────────────────────────────────────────── */
+  /*  Sign out                                                   */
+  /* ─────────────────────────────────────────────────────────── */
+
+  const handleSignOut = () => {
+    logout();
+    navigate("/signin");
+  };
+
+  /* ─────────────────────────────────────────────────────────── */
+  /*  Render                                                     */
+  /* ─────────────────────────────────────────────────────────── */
+
   return (
     <div className="recipient-dashboard-container">
+      {/* ── Header ─────────────────────────────────────────── */}
       <header className="classic-dashboard-header">
         <div className="classic-dashboard-header-content">
-          <div className="flex items-center">
-            <h1 className="classic-dashboard-title">
-              Blood Recipient Dashboard
-            </h1>
+          <div className="flex items-center gap-3">
+            <span style={{ fontSize: "1.5rem" }}>🏥</span>
+            <div>
+              <h1 className="classic-dashboard-title">
+                Inter-Hospital Blood Request System
+              </h1>
+              {myHospitalName && (
+                <p style={{ margin: 0, fontSize: "0.85rem", opacity: 0.8 }}>
+                  {myHospitalName}
+                </p>
+              )}
+            </div>
           </div>
           <div className="classic-dashboard-user-info">
-            <span className="recipient-welcome-text">Welcome, Recipient</span>
-            <Link to="/signout" className="classic-signout-button">
+            <span className="recipient-welcome-text">
+              Welcome, {user?.name ?? "Hospital Staff"}
+            </span>
+            <button onClick={handleSignOut} className="classic-signout-button">
               Sign Out
-            </Link>
+            </button>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          {/* Tab Navigation */}
+          {/* ── Tab navigation ─────────────────────────────── */}
           <div className="recipient-tab-container">
             <div className="recipient-tab-nav">
               <nav className="-mb-px flex">
                 <button
                   onClick={() => setActiveTab("new-request")}
-                  className={`recipient-tab-button ${
-                    activeTab === "new-request" ? "active" : ""
-                  }`}
+                  className={`recipient-tab-button ${activeTab === "new-request" ? "active" : ""}`}
                 >
-                  New Blood Request
+                  ➕ New Blood Request
                 </button>
                 <button
                   onClick={() => setActiveTab("my-requests")}
-                  className={`recipient-tab-button ${
-                    activeTab === "my-requests" ? "active" : ""
-                  }`}
+                  className={`recipient-tab-button ${activeTab === "my-requests" ? "active" : ""}`}
                 >
-                  My Requests ({requests.length})
+                  📤 My Requests
+                  {outgoing.length > 0 && (
+                    <span className="recipient-tab-badge">
+                      {outgoing.length}
+                    </span>
+                  )}
                 </button>
+                {isHospitalUser && (
+                  <button
+                    onClick={() => setActiveTab("incoming-requests")}
+                    className={`recipient-tab-button ${activeTab === "incoming-requests" ? "active" : ""}`}
+                  >
+                    📥 Incoming Requests
+                    {incoming.filter((r) => r.status === "pending").length >
+                      0 && (
+                      <span
+                        className="recipient-tab-badge"
+                        style={{ background: "#dc2626" }}
+                      >
+                        {incoming.filter((r) => r.status === "pending").length}
+                      </span>
+                    )}
+                  </button>
+                )}
                 <button
                   onClick={() => setActiveTab("blood-inventory")}
-                  className={`recipient-tab-button ${
-                    activeTab === "blood-inventory" ? "active" : ""
-                  }`}
+                  className={`recipient-tab-button ${activeTab === "blood-inventory" ? "active" : ""}`}
                 >
                   🩸 Blood Inventory
                 </button>
@@ -250,41 +337,74 @@ const ResipientDashboard = () => {
             </div>
           </div>
 
+          {/* ══════════════════════════════════════════════════
+              TAB: New Blood Request
+          ══════════════════════════════════════════════════ */}
           {activeTab === "new-request" && (
             <div className="recipient-card recipient-fade-in">
               <h2 className="recipient-card-header">
                 Request Blood Transfer Between Hospitals
               </h2>
 
+              {/* Hospital identity banner */}
+              {isHospitalUser && myHospitalName && (
+                <div
+                  style={{
+                    background: "#eff6ff",
+                    border: "1px solid #bfdbfe",
+                    borderRadius: "0.5rem",
+                    padding: "0.75rem 1rem",
+                    marginBottom: "1.5rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    fontSize: "0.9rem",
+                    color: "#1e40af",
+                  }}
+                >
+                  🏥 <strong>Requesting as:</strong>&nbsp;{myHospitalName}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="recipient-form-grid">
-                  {/* From Hospital Selection */}
+                  {/* From Hospital — locked if hospital user */}
                   <div className="recipient-form-group">
                     <label className="recipient-form-label required">
                       From Hospital (Requesting Hospital)
                     </label>
-                    <select
-                      name="from_hospital_id"
-                      value={formData.from_hospital_id}
-                      onChange={handleInputChange}
-                      required
-                      className="recipient-form-select"
-                      disabled={loading}
-                    >
-                      <option value="">
-                        {loading
-                          ? "Loading hospitals..."
-                          : "Select requesting hospital..."}
-                      </option>
-                      {hospitals.map((hospital) => (
-                        <option key={hospital.id} value={hospital.id}>
-                          {hospital.name}
+                    {isHospitalUser && myHospitalId ? (
+                      <input
+                        type="text"
+                        value={myHospitalName ?? ""}
+                        readOnly
+                        className="recipient-form-input"
+                        style={{ background: "#f3f4f6", cursor: "not-allowed" }}
+                      />
+                    ) : (
+                      <select
+                        name="from_hospital_id"
+                        value={formData.from_hospital_id}
+                        onChange={handleInputChange}
+                        required
+                        className="recipient-form-select"
+                        disabled={loading}
+                      >
+                        <option value="">
+                          {loading
+                            ? "Loading hospitals..."
+                            : "Select requesting hospital..."}
                         </option>
-                      ))}
-                    </select>
+                        {hospitals.map((h) => (
+                          <option key={h.id} value={h.id}>
+                            {h.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
-                  {/* To Hospital Selection */}
+                  {/* To Hospital */}
                   <div className="recipient-form-group">
                     <label className="recipient-form-label required">
                       To Hospital (Donor Hospital)
@@ -303,10 +423,14 @@ const ResipientDashboard = () => {
                           : "Select donor hospital..."}
                       </option>
                       {hospitals
-                        .filter((h) => h.id != formData.from_hospital_id)
-                        .map((hospital) => (
-                          <option key={hospital.id} value={hospital.id}>
-                            {hospital.name}
+                        .filter((h) =>
+                          isHospitalUser
+                            ? String(h.id) !== String(myHospitalId)
+                            : String(h.id) !== formData.from_hospital_id,
+                        )
+                        .map((h) => (
+                          <option key={h.id} value={h.id}>
+                            {h.name}
                           </option>
                         ))}
                     </select>
@@ -325,15 +449,15 @@ const ResipientDashboard = () => {
                       className="recipient-form-select"
                     >
                       <option value="">Select blood type...</option>
-                      {bloodTypes.map((type) => (
-                        <option key={type.id} value={type.group}>
-                          {type.group}
+                      {bloodTypes.map((t) => (
+                        <option key={t.id} value={t.group}>
+                          {t.group}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  {/* Units Required */}
+                  {/* Units */}
                   <div className="recipient-form-group">
                     <label className="recipient-form-label required">
                       Number of Units
@@ -380,7 +504,7 @@ const ResipientDashboard = () => {
                     />
                   </div>
 
-                  {/* Phone Number */}
+                  {/* Phone */}
                   <div className="recipient-form-group">
                     <label className="recipient-form-label required">
                       Phone Number
@@ -462,7 +586,7 @@ const ResipientDashboard = () => {
                   </div>
                 </div>
 
-                {/* Reason for Request */}
+                {/* Reason */}
                 <div className="recipient-form-group">
                   <label className="recipient-form-label required">
                     Reason for Blood Request
@@ -474,7 +598,7 @@ const ResipientDashboard = () => {
                     required
                     rows="3"
                     className="recipient-form-textarea"
-                    placeholder="Please describe why blood is needed (e.g., surgery, accident, anemia, etc.)"
+                    placeholder="e.g., surgery, accident, anaemia…"
                   />
                 </div>
 
@@ -489,27 +613,63 @@ const ResipientDashboard = () => {
                     onChange={handleInputChange}
                     rows="3"
                     className="recipient-form-textarea"
-                    placeholder="Any relevant medical history the hospital should know about"
+                    placeholder="Any relevant medical history the receiving hospital should know about"
                   />
                 </div>
 
-                {/* Submit Button */}
                 <div className="flex justify-end">
-                  <button type="submit" className="recipient-submit-button">
-                    Submit Inter-Hospital Blood Request
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="recipient-submit-button"
+                  >
+                    {submitting
+                      ? "Submitting…"
+                      : "Submit Inter-Hospital Blood Request"}
                   </button>
                 </div>
               </form>
             </div>
           )}
 
+          {/* ══════════════════════════════════════════════════
+              TAB: My Requests (outgoing)
+          ══════════════════════════════════════════════════ */}
           {activeTab === "my-requests" && (
             <div className="recipient-card recipient-fade-in">
-              <h2 className="recipient-card-header">My Blood Requests</h2>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "1rem",
+                }}
+              >
+                <h2 className="recipient-card-header" style={{ margin: 0 }}>
+                  📤 My Outgoing Requests
+                </h2>
+                <button
+                  onClick={fetchOutgoing}
+                  className="recipient-inventory-refresh-btn"
+                  disabled={outgoingLoading}
+                >
+                  {outgoingLoading ? "↻ Loading…" : "↻ Refresh"}
+                </button>
+              </div>
 
-              {requests.length === 0 ? (
+              {outgoingLoading ? (
+                <p
+                  style={{
+                    textAlign: "center",
+                    color: "#6b7280",
+                    padding: "2rem",
+                  }}
+                >
+                  Loading requests…
+                </p>
+              ) : outgoing.length === 0 ? (
                 <div className="recipient-empty-state">
-                  <p>No blood requests found.</p>
+                  <p>No outgoing blood requests yet.</p>
                   <button
                     onClick={() => setActiveTab("new-request")}
                     className="recipient-create-request-link"
@@ -522,41 +682,33 @@ const ResipientDashboard = () => {
                   <table className="recipient-table">
                     <thead>
                       <tr>
-                        <th>Request ID</th>
-                        <th>Hospital</th>
+                        <th>#</th>
+                        <th>From Hospital</th>
+                        <th>To Hospital</th>
                         <th>Blood Type</th>
                         <th>Units</th>
-                        <th>Urgency</th>
-                        <th>Status</th>
                         <th>Date</th>
-                        <th>Contact</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {requests.map((request) => (
-                        <tr key={request.id}>
-                          <td className="recipient-request-id">
-                            #{request.id}
-                          </td>
-                          <td>{request.hospitalName}</td>
+                      {outgoing.map((r) => (
+                        <tr key={r.id}>
+                          <td className="recipient-request-id">#{r.id}</td>
+                          <td>{r.from_hospital?.name ?? "—"}</td>
+                          <td>{r.to_hospital?.name ?? "—"}</td>
                           <td className="recipient-blood-type">
-                            {request.bloodType}
+                            {r.blood_group}
                           </td>
-                          <td>{request.units}</td>
-                          <td
-                            className={`recipient-urgency-${request.urgency.toLowerCase()}`}
-                          >
-                            {request.urgency}
-                          </td>
+                          <td>{r.units_requested}</td>
+                          <td>{r.request_date}</td>
                           <td>
                             <span
-                              className={`recipient-status-badge recipient-status-${request.status.toLowerCase()}`}
+                              className={`recipient-status-badge ${STATUS_CLASSES[r.status] ?? ""}`}
                             >
-                              {request.status}
+                              {r.status}
                             </span>
                           </td>
-                          <td>{request.date}</td>
-                          <td>{request.contactPerson}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -566,16 +718,154 @@ const ResipientDashboard = () => {
             </div>
           )}
 
-          {/* Blood Inventory Tab */}
+          {/* ══════════════════════════════════════════════════
+              TAB: Incoming Requests
+          ══════════════════════════════════════════════════ */}
+          {activeTab === "incoming-requests" && isHospitalUser && (
+            <div className="recipient-card recipient-fade-in">
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "1rem",
+                }}
+              >
+                <h2 className="recipient-card-header" style={{ margin: 0 }}>
+                  📥 Incoming Blood Requests
+                </h2>
+                <button
+                  onClick={fetchIncoming}
+                  className="recipient-inventory-refresh-btn"
+                  disabled={incomingLoading}
+                >
+                  {incomingLoading ? "↻ Loading…" : "↻ Refresh"}
+                </button>
+              </div>
+              <p
+                style={{
+                  color: "#6b7280",
+                  fontSize: "0.9rem",
+                  marginBottom: "1rem",
+                }}
+              >
+                Requests other hospitals have sent to{" "}
+                <strong>{myHospitalName}</strong>. Approve or reject each
+                request below.
+              </p>
+
+              {incomingLoading ? (
+                <p
+                  style={{
+                    textAlign: "center",
+                    color: "#6b7280",
+                    padding: "2rem",
+                  }}
+                >
+                  Loading requests…
+                </p>
+              ) : incoming.length === 0 ? (
+                <div className="recipient-empty-state">
+                  <p>No incoming requests for your hospital yet.</p>
+                </div>
+              ) : (
+                <div className="recipient-table-container">
+                  <table className="recipient-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Requesting Hospital</th>
+                        <th>Blood Type</th>
+                        <th>Units</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {incoming.map((r) => (
+                        <tr key={r.id}>
+                          <td className="recipient-request-id">#{r.id}</td>
+                          <td>{r.from_hospital?.name ?? "—"}</td>
+                          <td className="recipient-blood-type">
+                            {r.blood_group}
+                          </td>
+                          <td>{r.units_requested}</td>
+                          <td>{r.request_date}</td>
+                          <td>
+                            <span
+                              className={`recipient-status-badge ${STATUS_CLASSES[r.status] ?? ""}`}
+                            >
+                              {r.status}
+                            </span>
+                          </td>
+                          <td>
+                            {r.status === "pending" ? (
+                              <div style={{ display: "flex", gap: "0.5rem" }}>
+                                <button
+                                  disabled={updatingId === r.id}
+                                  onClick={() =>
+                                    handleStatusUpdate(r.id, "approved")
+                                  }
+                                  className="recipient-request-btn"
+                                  style={{ background: "#16a34a" }}
+                                >
+                                  {updatingId === r.id ? "…" : "✓ Approve"}
+                                </button>
+                                <button
+                                  disabled={updatingId === r.id}
+                                  onClick={() =>
+                                    handleStatusUpdate(r.id, "rejected")
+                                  }
+                                  className="recipient-request-btn"
+                                  style={{ background: "#dc2626" }}
+                                >
+                                  {updatingId === r.id ? "…" : "✕ Reject"}
+                                </button>
+                              </div>
+                            ) : r.status === "approved" ? (
+                              <button
+                                disabled={updatingId === r.id}
+                                onClick={() =>
+                                  handleStatusUpdate(r.id, "fulfilled")
+                                }
+                                className="recipient-request-btn"
+                                style={{ background: "#7c3aed" }}
+                              >
+                                {updatingId === r.id ? "…" : "✔ Mark Fulfilled"}
+                              </button>
+                            ) : (
+                              <span
+                                style={{
+                                  color: "#9ca3af",
+                                  fontSize: "0.85rem",
+                                }}
+                              >
+                                No actions
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════
+              TAB: Blood Inventory
+          ══════════════════════════════════════════════════ */}
           {activeTab === "blood-inventory" && (
             <div className="recipient-card recipient-fade-in">
               <h2 className="recipient-card-header">
                 🩸 Blood Inventory by Hospital
               </h2>
               <p className="recipient-inventory-subtitle">
-                Browse available blood stock across all hospitals. Select a
-                blood type to find hospitals that can fulfil your request, then
-                click <strong>Request</strong> to pre-fill the request form.
+                Browse available blood stock across all hospitals. Filter by
+                blood type then click <strong>Request Blood</strong> to pre-fill
+                the request form.
               </p>
 
               {/* Filter bar */}
@@ -612,7 +902,7 @@ const ResipientDashboard = () => {
                 </button>
               </div>
 
-              {/* Skeleton loader */}
+              {/* Skeleton */}
               {inventoryLoading && (
                 <div className="recipient-inventory-skeleton-grid">
                   {Array.from({ length: 6 }).map((_, i) => (
@@ -637,7 +927,7 @@ const ResipientDashboard = () => {
                 </div>
               )}
 
-              {/* Inventory content */}
+              {/* Content */}
               {!inventoryLoading &&
                 (() => {
                   const filtered = inventoryFilter
@@ -681,7 +971,6 @@ const ResipientDashboard = () => {
                   }
 
                   return inventoryFilter ? (
-                    /* Filtered view — clean focused table */
                     <>
                       <p className="recipient-inventory-summary">
                         <strong>{filtered.length}</strong> hospital
@@ -769,7 +1058,6 @@ const ResipientDashboard = () => {
                       </div>
                     </>
                   ) : (
-                    /* All-types view — compact grid cards */
                     <div className="recipient-inventory-grid">
                       {inventoryData.map((hospital) => (
                         <div

@@ -38,6 +38,11 @@ class LoginController extends Controller
             ], 401);
         }
 
+        // Eager-load hospital if the user is a hospital staff member
+        if ($user->hospital_id) {
+            $user->load('hospital');
+        }
+
         try {
             // Create token (assuming you're using Laravel Sanctum or similar)
             $token = $user->createToken('auth_token')->plainTextToken;
@@ -89,10 +94,10 @@ class LoginController extends Controller
     public function updateProfile(Request $request)
     {
         $user = $request->user();
-        
+
         // Dynamic validation - only validate fields that are actually sent
         $rules = [];
-        
+
         if ($request->has('name')) {
             $rules['name'] = 'required|string|max:255';
         }
