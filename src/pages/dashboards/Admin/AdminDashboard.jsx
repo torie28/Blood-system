@@ -632,11 +632,170 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="admin-loading-container">
-        <div className="text-center">
-          <div className="admin-loading-spinner"></div>
-          <p className="admin-loading-text">Loading dashboard...</p>
-        </div>
+      <div className="admin-dashboard-container">
+        {/* ── Skeleton Header ── */}
+        <header className="classic-dashboard-header">
+          <div className="classic-dashboard-header-content">
+            <div className="flex items-center">
+              <div
+                className="admin-sk-line"
+                style={{ width: 200, height: 28 }}
+              />
+            </div>
+            <div className="classic-dashboard-user-info">
+              <div
+                className="admin-sk-line"
+                style={{ width: 64, height: 24, borderRadius: 999 }}
+              />
+              <div
+                className="admin-sk-line"
+                style={{ width: 96, height: 36, borderRadius: 8 }}
+              />
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          <div className="px-4 py-6 sm:px-0">
+            {/* ── Skeleton Stat Cards ── */}
+            <div className="admin-stats-container">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="admin-stat-card admin-sk-stat-card">
+                  <div
+                    className="admin-sk-line"
+                    style={{ width: "55%", height: 14, marginBottom: 14 }}
+                  />
+                  <div
+                    className="admin-sk-line"
+                    style={{ width: "35%", height: 40, marginBottom: 10 }}
+                  />
+                  <div
+                    className="admin-sk-line"
+                    style={{ width: "70%", height: 12 }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* ── Skeleton Tab Nav ── */}
+            <div className="admin-tab-container">
+              <div className="admin-tab-nav">
+                <nav className="flex -mb-px" style={{ gap: "0.5rem" }}>
+                  {[140, 120, 160, 130].map((w, i) => (
+                    <div
+                      key={i}
+                      className="admin-sk-line admin-sk-tab"
+                      style={{ width: w }}
+                    />
+                  ))}
+                </nav>
+              </div>
+
+              {/* ── Skeleton Tab Content ── */}
+              <div className="admin-tab-content">
+                {/* Section heading */}
+                <div
+                  className="admin-sk-line"
+                  style={{
+                    width: 260,
+                    height: 22,
+                    marginBottom: 24,
+                    borderRadius: 6,
+                  }}
+                />
+
+                {/* Two stat-grid cards */}
+                <div className="admin-stats-grid">
+                  {[0, 1].map((c) => (
+                    <div key={c} className="admin-stats-card">
+                      <div
+                        className="admin-sk-line"
+                        style={{
+                          width: "45%",
+                          height: 16,
+                          marginBottom: 18,
+                        }}
+                      />
+                      {[90, 75, 85, 70, 80].map((w, r) => (
+                        <div
+                          key={r}
+                          className="admin-stat-item"
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <div
+                            className="admin-sk-line"
+                            style={{ width: `${w}%`, height: 13, flex: "none" }}
+                          />
+                          <div
+                            className="admin-sk-line"
+                            style={{ width: 32, height: 13, flex: "none" }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Skeleton table */}
+                <div
+                  className="admin-sk-line"
+                  style={{
+                    width: 200,
+                    height: 18,
+                    margin: "2rem 0 1rem",
+                    borderRadius: 6,
+                  }}
+                />
+                <div className="admin-sk-table">
+                  {/* thead row */}
+                  <div className="admin-sk-table-row admin-sk-table-head">
+                    {[
+                      "18%",
+                      "14%",
+                      "12%",
+                      "10%",
+                      "10%",
+                      "12%",
+                      "12%",
+                      "12%",
+                    ].map((w, i) => (
+                      <div
+                        key={i}
+                        className="admin-sk-line"
+                        style={{ width: w, height: 13 }}
+                      />
+                    ))}
+                  </div>
+                  {/* tbody rows */}
+                  {[0, 1, 2, 3, 4].map((r) => (
+                    <div key={r} className="admin-sk-table-row">
+                      {[
+                        "18%",
+                        "14%",
+                        "12%",
+                        "10%",
+                        "10%",
+                        "12%",
+                        "12%",
+                        "12%",
+                      ].map((w, i) => (
+                        <div
+                          key={i}
+                          className="admin-sk-line"
+                          style={{ width: w, height: 14 }}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -1350,132 +1509,196 @@ const AdminDashboard = () => {
                   </div>
                 )}
 
-                {/* ── Location Filter ── */}
-                <div className="admin-filter-section mb-4">
-                  <label className="admin-filter-label">
-                    Filter Approved Requests by Location
-                  </label>
-                  <select
-                    value={selectedDonorRequestLocation}
-                    onChange={(e) =>
-                      setSelectedDonorRequestLocation(e.target.value)
-                    }
-                    className="admin-filter-select"
-                  >
-                    <option value="">All Locations</option>
-                    {locations.map((location) => (
-                      <option key={location.id} value={location.name}>
-                        {location.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* ── Approved Donor Requests Card ── */}
+                <div className="approved-requests-card">
+                  {/* Card Header */}
+                  <div className="approved-requests-header">
+                    <div className="approved-requests-header-left">
+                      <div className="approved-requests-icon-wrap">
+                        <span className="approved-requests-icon">✅</span>
+                      </div>
+                      <div>
+                        <h4 className="approved-requests-title">
+                          Approved Donor Requests
+                        </h4>
+                        <p className="approved-requests-subtitle">
+                          All processed &amp; live blood donation requests
+                        </p>
+                      </div>
+                    </div>
 
-                {/* ── Approved / All processed requests ── */}
-                <h4
-                  style={{
-                    fontSize: "1rem",
-                    fontWeight: 700,
-                    color: "#1e3a5f",
-                    marginBottom: "0.75rem",
-                  }}
-                >
-                  ✅ Approved Donor Requests
-                </h4>
-                <div className="admin-table-container">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Title</th>
-                        <th>Hospital</th>
-                        <th>Location</th>
-                        <th>Blood Type</th>
-                        <th>Units</th>
-                        <th>Urgency</th>
-                        <th>Deadline</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredDonorRequests.filter(
-                        (r) => r.status !== "pending",
-                      ).length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan="9"
-                            className="text-center py-8 text-gray-500"
-                          >
-                            {donorRequests.filter((r) => r.status !== "pending")
-                              .length === 0
-                              ? "No approved donor requests yet."
-                              : "No requests match the selected location filter."}
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredDonorRequests
-                          .filter((r) => r.status !== "pending")
-                          .map((request) => (
-                            <tr key={request.id}>
-                              <td className="font-medium">
-                                <div>
-                                  <div className="font-semibold">
-                                    {request.title}
-                                  </div>
-                                  <div className="text-sm text-gray-500 max-w-xs truncate">
-                                    {request.description}
-                                  </div>
-                                </div>
-                              </td>
-                              <td>{request.hospitalName}</td>
-                              <td>{request.location}</td>
-                              <td className="font-medium">
-                                {request.bloodType}
-                              </td>
-                              <td>{request.units}</td>
-                              <td>
-                                <span
-                                  className={`admin-urgency-badge admin-urgency-${(request.urgency || "").toLowerCase()}`}
-                                >
-                                  {request.urgency}
-                                </span>
-                              </td>
-                              <td>{request.deadline}</td>
-                              <td>
-                                <span
-                                  className={`admin-status-badge admin-status-${request.status}`}
-                                >
-                                  {request.status}
-                                </span>
-                              </td>
-                              <td>
-                                <div className="admin-action-buttons">
-                                  <button
-                                    onClick={() =>
-                                      handleToggleDonorRequestStatus(request.id)
-                                    }
-                                    className={`admin-action-button ${request.status === "active" || request.status === "approved" ? "deactivate" : "activate"}`}
-                                  >
-                                    {request.status === "active" ||
-                                    request.status === "approved"
-                                      ? "Deactivate"
-                                      : "Activate"}
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      handleDeleteDonorRequest(request.id)
-                                    }
-                                    className="admin-action-button delete"
-                                  >
-                                    Delete
-                                  </button>
+                    <div className="approved-requests-header-right">
+                      {/* Stat pills */}
+                      <div className="approved-requests-stats">
+                        <span className="approved-stat-pill approved-stat-approved">
+                          ✅&nbsp;
+                          {
+                            donorRequests.filter((r) => r.status === "approved")
+                              .length
+                          }{" "}
+                          Approved
+                        </span>
+                        <span className="approved-stat-pill approved-stat-active">
+                          🟢&nbsp;
+                          {
+                            donorRequests.filter((r) => r.status === "active")
+                              .length
+                          }{" "}
+                          Active
+                        </span>
+                        <span className="approved-stat-pill approved-stat-rejected">
+                          ❌&nbsp;
+                          {
+                            donorRequests.filter((r) => r.status === "rejected")
+                              .length
+                          }{" "}
+                          Rejected
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Filter bar inside card */}
+                  <div className="approved-requests-filter-bar">
+                    <span className="approved-filter-label">
+                      📍 Filter by Location
+                    </span>
+                    <select
+                      value={selectedDonorRequestLocation}
+                      onChange={(e) =>
+                        setSelectedDonorRequestLocation(e.target.value)
+                      }
+                      className="approved-filter-select"
+                    >
+                      <option value="">All Locations</option>
+                      {locations.map((location) => (
+                        <option key={location.id} value={location.name}>
+                          {location.name}
+                        </option>
+                      ))}
+                    </select>
+                    {selectedDonorRequestLocation && (
+                      <button
+                        onClick={() => setSelectedDonorRequestLocation("")}
+                        className="approved-filter-clear"
+                      >
+                        ✕ Clear
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Table body */}
+                  <div className="approved-requests-body">
+                    <div className="admin-table-container">
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            <th>Title</th>
+                            <th>Hospital</th>
+                            <th>Location</th>
+                            <th>Blood Type</th>
+                            <th>Units</th>
+                            <th>Urgency</th>
+                            <th>Deadline</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredDonorRequests.filter(
+                            (r) => r.status !== "pending",
+                          ).length === 0 ? (
+                            <tr>
+                              <td colSpan="9">
+                                <div className="approved-empty-state">
+                                  <div className="approved-empty-icon">📋</div>
+                                  <p className="approved-empty-title">
+                                    {donorRequests.filter(
+                                      (r) => r.status !== "pending",
+                                    ).length === 0
+                                      ? "No approved donor requests yet."
+                                      : "No requests match the selected location."}
+                                  </p>
+                                  <p className="approved-empty-hint">
+                                    Approve pending requests above to see them
+                                    here.
+                                  </p>
                                 </div>
                               </td>
                             </tr>
-                          ))
-                      )}
-                    </tbody>
-                  </table>
+                          ) : (
+                            filteredDonorRequests
+                              .filter((r) => r.status !== "pending")
+                              .map((request) => (
+                                <tr key={request.id}>
+                                  <td className="font-medium">
+                                    <div>
+                                      <div className="font-semibold">
+                                        {request.title}
+                                      </div>
+                                      <div className="text-sm text-gray-500 max-w-xs truncate">
+                                        {request.description}
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td>{request.hospitalName}</td>
+                                  <td>{request.location}</td>
+                                  <td className="font-medium">
+                                    {request.bloodType}
+                                  </td>
+                                  <td>{request.units}</td>
+                                  <td>
+                                    <span
+                                      className={`admin-urgency-badge admin-urgency-${(request.urgency || "").toLowerCase()}`}
+                                    >
+                                      {request.urgency}
+                                    </span>
+                                  </td>
+                                  <td>{request.deadline}</td>
+                                  <td>
+                                    <span
+                                      className={`admin-status-badge admin-status-${request.status}`}
+                                    >
+                                      {request.status}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <div className="admin-action-buttons">
+                                      <button
+                                        onClick={() =>
+                                          handleToggleDonorRequestStatus(
+                                            request.id,
+                                          )
+                                        }
+                                        className={`admin-action-button ${
+                                          request.status === "active" ||
+                                          request.status === "approved"
+                                            ? "deactivate"
+                                            : "activate"
+                                        }`}
+                                      >
+                                        {request.status === "active" ||
+                                        request.status === "approved"
+                                          ? "Deactivate"
+                                          : "Activate"}
+                                      </button>
+                                      <button
+                                        onClick={() =>
+                                          handleDeleteDonorRequest(request.id)
+                                        }
+                                        className="admin-action-button delete"
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
