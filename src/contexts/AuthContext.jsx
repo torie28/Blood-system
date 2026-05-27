@@ -1,42 +1,39 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../utils/api.js';
+import React, { createContext, useState } from "react";
+import api from "../utils/api.js";
 
 const AuthContext = createContext();
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Initialize auth state on mount
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const storedToken = localStorage.getItem('authToken');
+// Lazily initialize auth state from localStorage to avoid setState in effects
+function getInitialAuthState() {
+  try {
+    const storedUser = localStorage.getItem("user");
+    const storedToken = localStorage.getItem("authToken");
     if (storedUser) {
       const userData = JSON.parse(storedUser);
-      // Include token if it exists
       if (storedToken) {
         userData.token = storedToken;
         api.setToken(storedToken);
       }
-      setUser(userData);
-      setIsAuthenticated(true);
+      return { user: userData, isAuthenticated: true };
     }
-  }, []);
+  } catch (error) {
+    console.error("Error reading auth state from localStorage:", error);
+  }
+  return { user: null, isAuthenticated: false };
+}
+
+export const AuthProvider = ({ children }) => {
+  const [{ user: initialUser, isAuthenticated: initialAuth }] =
+    useState(getInitialAuthState);
+  const [user, setUser] = useState(initialUser);
+  const [isAuthenticated, setIsAuthenticated] = useState(initialAuth);
 
   const login = (userData) => {
     setUser(userData);
     setIsAuthenticated(true);
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem("user", JSON.stringify(userData));
     if (userData.token) {
-      localStorage.setItem('authToken', userData.token);
+      localStorage.setItem("authToken", userData.token);
       api.setToken(userData.token);
     }
   };
@@ -44,15 +41,15 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('user');
-    localStorage.removeItem('authToken');
+    localStorage.removeItem("user");
+    localStorage.removeItem("authToken");
     api.removeToken();
   };
 
   const checkAuth = () => {
     // Check localStorage for persistent authentication
-    const storedUser = localStorage.getItem('user');
-    const storedToken = localStorage.getItem('authToken');
+    const storedUser = localStorage.getItem("user");
+    const storedToken = localStorage.getItem("authToken");
 
     if (storedUser && storedToken) {
       try {
@@ -60,7 +57,7 @@ export const AuthProvider = ({ children }) => {
         userData.token = storedToken;
         return userData;
       } catch (error) {
-        console.error('Error parsing stored user data:', error);
+        console.error("Error parsing stored user data:", error);
         return null;
       }
     }
@@ -68,15 +65,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('authToken');
-    return token ? {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    } : {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    const token = localStorage.getItem("authToken");
+    return token
+      ? {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        }
+      : {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        };
   };
 
   const value = {
@@ -85,14 +84,10 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     checkAuth,
-    getAuthHeaders
+    getAuthHeaders,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContext;

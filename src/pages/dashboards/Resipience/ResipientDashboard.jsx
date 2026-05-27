@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../contexts/AuthContext.jsx";
+import { useAuth } from "../../../contexts/useAuth.js";
 
 /* ─────────────────────────────────────────────────────────────
    Helpers
