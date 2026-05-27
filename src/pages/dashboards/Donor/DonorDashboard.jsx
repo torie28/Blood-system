@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../contexts/AuthContext.jsx";
+import { useAuth } from "../../../contexts/useAuth.js";
 import api from "../../../utils/api.js";
 
 const DonorDashboard = () => {
