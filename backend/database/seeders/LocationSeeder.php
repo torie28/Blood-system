@@ -10,12 +10,12 @@ class LocationSeeder extends Seeder
     public function run(): void
     {
         $locations = [
-            ['city' => 'Nairobi', 'region' => 'Nairobi County'],
-            ['city' => 'Mombasa', 'region' => 'Mombasa County'],
-            ['city' => 'Kisumu', 'region' => 'Kisumu County'],
-            ['city' => 'Nakuru', 'region' => 'Nakuru County'],
-            ['city' => 'Mwanza', 'region' => 'Uasin Gishu County'],
-            ['city' => 'Arusha', 'region' => 'Arusha County'],
+            ['city' => 'Arusha', 'region' => 'Arusha '],
+            ['city' => 'Arusha', 'region' => 'Arusha'],
+            ['city' => 'Arusha', 'region' => 'Nganzerani'],
+            ['city' => 'Arusha', 'region' => 'Arusha'],
+            ['city' => 'Arusha', 'region' => 'Mererani'],
+            ['city' => 'Arusha', 'region' => 'Arusha city '],
         ];
         
         foreach ($locations as $location) {
