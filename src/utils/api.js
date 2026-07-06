@@ -32,6 +32,16 @@ class ApiClient {
 
             if (!response.ok) {
                 const error = await response.json();
+
+                // If 401 Unauthenticated, the token is stale/invalid – clear it and redirect
+                if (response.status === 401) {
+                    console.warn('Auth token is invalid or expired. Clearing session.');
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('user');
+                    window.location.href = '/signin';
+                    return; // stop further processing
+                }
+
                 throw new Error(error.message || `HTTP error! status: ${response.status}`);
             }
 
