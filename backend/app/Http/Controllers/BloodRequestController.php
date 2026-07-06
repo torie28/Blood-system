@@ -30,21 +30,23 @@ class BloodRequestController extends Controller
             return response()->json(['message' => 'Donor location not set'], 400);
         }
 
-        // Find location ID that matches donor's location
-        $location = Location::where('city', 'like', '%' . $donorLocation . '%')
+        // Find ALL location IDs that match donor's location (city or region)
+        $locations = Location::where('city', 'like', '%' . $donorLocation . '%')
             ->orWhere('region', 'like', '%' . $donorLocation . '%')
-            ->first();
+            ->get();
 
-        \Log::info('Found location: ', [$location]);
+        \Log::info('Found locations: ', $locations->toArray());
 
-        if (!$location) {
+        if ($locations->isEmpty()) {
             $allLocations = Location::all();
             \Log::info('All available locations:', $allLocations->toArray());
             return response()->json(['message' => 'No matching location found for: ' . $donorLocation], 404);
         }
 
-        // Get APPROVED blood requests for this location only
-        $bloodRequests = BloodRequest::where('location_id', $location->id)
+        $locationIds = $locations->pluck('id')->toArray();
+
+        // Get APPROVED blood requests for ALL matching locations
+        $bloodRequests = BloodRequest::whereIn('location_id', $locationIds)
             ->where('status', 'approved')
             ->with(['hospital', 'urgencyLevel', 'location'])
             ->orderBy('request_date', 'desc')
@@ -80,11 +82,11 @@ class BloodRequestController extends Controller
 
         // Filter by location string (city/region name)
         if ($request->location) {
-            $location = Location::where('city', 'like', '%' . $request->location . '%')
+            $locations = Location::where('city', 'like', '%' . $request->location . '%')
                 ->orWhere('region', 'like', '%' . $request->location . '%')
-                ->first();
-            if ($location) {
-                $query->where('location_id', $location->id);
+                ->get();
+            if ($locations->isNotEmpty()) {
+                $query->whereIn('location_id', $locations->pluck('id')->toArray());
             } else {
                 // No matching location found — return empty
                 return response()->json(['success' => true, 'requests' => []]);
